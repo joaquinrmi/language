@@ -103,6 +103,30 @@ namespace dnc
          double max_num;
       };
 
+      class BLANKCommand : public Command
+      {
+      public:
+         BLANKCommand();
+         ~BLANKCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+      };
+
+      class OPTBLANKCommand : public Command
+      {
+      public:
+         OPTBLANKCommand();
+         ~OPTBLANKCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+      };
+
       struct CommandToken
       {
          enum Type

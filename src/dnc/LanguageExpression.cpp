@@ -57,7 +57,27 @@ namespace dnc
          }
 
          return false;
-      }}
+      }},
+
+      {"_", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+         if(args.size() != 0)
+         {
+            return false;
+         }
+
+         command = new BLANKCommand();
+         return true;
+      }},
+
+      {"-", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+         if(args.size() != 0)
+         {
+            return false;
+         }
+
+         command = new OPTBLANKCommand();
+         return true;
+      }},
    };
 
    LanguageExpression::LanguageExpression()
@@ -532,5 +552,98 @@ namespace dnc
       }
 	  
 	  return string("NUM(") + dnc::toString(min_num) + "," + dnc::toString(max_num) + ")";
+   }
+
+   /*
+      class LanguageExpression::BLANKCommand
+   */
+   LanguageExpression::BLANKCommand::BLANKCommand()
+   {}
+
+   LanguageExpression::BLANKCommand::~BLANKCommand()
+   {}
+
+   bool LanguageExpression::BLANKCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      bool found = false;
+
+      while(true)
+      {
+         TextToken token;
+         if(!UTF8Tokenizator::getToken(text, pos, token).ok())
+         {
+            break;
+         }
+
+         if(token.type != TextToken::SPACE)
+         {
+            break;
+         }
+
+         pos += token.value.size();
+         found = true;
+      }
+
+      return found;
+   }
+
+   LanguageExpression::Command* LanguageExpression::BLANKCommand::copy() const
+   {
+      return new BLANKCommand();
+   }
+
+   string LanguageExpression::BLANKCommand::toString() const
+   {
+      return "_";
+   }
+
+   /*
+      class LanguageExpression::OPTBLANKCommand
+   */
+   LanguageExpression::OPTBLANKCommand::OPTBLANKCommand()
+   {}
+
+   LanguageExpression::OPTBLANKCommand::~OPTBLANKCommand()
+   {}
+
+   bool LanguageExpression::OPTBLANKCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      while(true)
+      {
+         TextToken token;
+         if(!UTF8Tokenizator::getToken(text, pos, token).ok())
+         {
+            break;
+         }
+
+         if(token.type != TextToken::SPACE)
+         {
+            break;
+         }
+
+         pos += token.value.size();
+      }
+
+      return true;
+   }
+
+   LanguageExpression::Command* LanguageExpression::OPTBLANKCommand::copy() const
+   {
+      return new OPTBLANKCommand();
+   }
+
+   string LanguageExpression::OPTBLANKCommand::toString() const
+   {
+      return "-";
    }
 }
