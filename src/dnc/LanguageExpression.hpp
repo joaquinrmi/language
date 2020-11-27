@@ -19,6 +19,9 @@ namespace dnc
       bool create(const std::string& expression, uint32_t init_pos = 0);
       bool create(const std::string& expression, uint32_t init_pos, uint32_t last_pos);
 
+      bool check(const std::string& text, uint32_t init_pos = 0) const;
+      bool check(const std::string& text, uint32_t init_pos, uint32_t last_pos) const;
+
       void clear();
 
       std::string toString() const;
@@ -29,6 +32,8 @@ namespace dnc
       public:
          Command();
          virtual ~Command();
+
+         virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const = 0;
 
          virtual Command* copy() const = 0;
          virtual std::string toString() const = 0;
@@ -42,11 +47,42 @@ namespace dnc
          UCHARCommand(std::string&& unique_char);
          ~UCHARCommand();
 
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
          Command* copy() const override;
          std::string toString() const override;
 
       private:
          std::string unique_char;
+      };
+
+      class CHARCommand : public Command
+      {
+      public:
+         CHARCommand();
+         ~CHARCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+      };
+
+      class STRCommand : public Command
+      {
+      public:
+         STRCommand();
+         STRCommand(const std::string& str);
+         STRCommand(std::string&& str);
+         ~STRCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         std::string value;
       };
 
       struct CommandToken

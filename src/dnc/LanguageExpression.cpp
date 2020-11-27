@@ -19,7 +19,27 @@ namespace dnc
             return false;
          }
 
-         command = new UCHARCommand(args[0].value);
+         command = new UCHARCommand(move(args[0].value));
+         return true;
+      }},
+
+      {"CHAR", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+         if(args.size() != 0)
+         {
+            return false;
+         }
+
+         command = new CHARCommand();
+         return true;
+      }},
+
+      {"STR", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+         if(args.size() != 1)
+         {
+            return false;
+         }
+
+         command = new STRCommand(move(args[0].value));
          return true;
       }}
    };
@@ -70,6 +90,24 @@ namespace dnc
 
       clear();
       command_sequence = move(current_command_sequence);
+
+      return true;
+   }
+
+   bool LanguageExpression::check(const string& text, uint32_t init_pos) const
+   {
+      return check(text, init_pos, text.size());
+   }
+
+   bool LanguageExpression::check(const string& text, uint32_t init_pos, uint32_t last_pos) const
+   {
+      for(auto command : command_sequence)
+      {
+         if(!command->check(text, init_pos, last_pos))
+         {
+            return false;
+         }
+      }
 
       return true;
    }
@@ -159,6 +197,11 @@ namespace dnc
             break;
 
          case TextToken::SYMBOL:
+            if(token.value == ")")
+            {
+               return true;
+            }
+
             if(token.value != "\"")
             {
                return false;
@@ -289,6 +332,29 @@ namespace dnc
    LanguageExpression::UCHARCommand::~UCHARCommand()
    {}
 
+   bool LanguageExpression::UCHARCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      int char_count;
+      if(!UTF8Analyzer::countNextChar(text, char_count, pos))
+      {
+         return false;
+      }
+
+      if(text.substr(pos, char_count) == unique_char)
+      {
+         pos += char_count;
+         return true;
+      }
+      pos += char_count;
+
+      return false;
+   }
+
    LanguageExpression::Command* LanguageExpression::UCHARCommand::copy() const
    {
       return new UCHARCommand(unique_char);
@@ -297,5 +363,95 @@ namespace dnc
    string LanguageExpression::UCHARCommand::toString() const
    {
       return string("UCHAR(") + unique_char + ")";
+   }
+
+   /*
+      class LanguageExpression::CHARCommand
+   */
+   LanguageExpression::CHARCommand::CHARCommand()
+   {}
+
+   LanguageExpression::CHARCommand::~CHARCommand()
+   {}
+
+   bool LanguageExpression::CHARCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      int char_count;
+      if(!UTF8Analyzer::countNextChar(text, char_count, pos))
+      {
+         return false;
+      }
+      pos += char_count;
+
+      if(char_count == 0)
+      {
+         return false;
+      }
+
+      return true;
+   }
+
+   LanguageExpression::Command* LanguageExpression::CHARCommand::copy() const
+   {
+      return new CHARCommand();
+   }
+
+   string LanguageExpression::CHARCommand::toString() const
+   {
+      return "CHAR()";
+   }
+
+   /*
+      class LanguageExpression::STRCommand
+   */
+   LanguageExpression::STRCommand::STRCommand()
+   {}
+
+   LanguageExpression::STRCommand::STRCommand(const string& str) :
+      value(str)
+   {}
+
+   LanguageExpression::STRCommand::STRCommand(string&& str) :
+      value(move(str))
+   {}
+
+   LanguageExpression::STRCommand::~STRCommand()
+   {}
+
+   bool LanguageExpression::STRCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      uint32_t final_pos = pos + value.size();
+      if(final_pos > text.size() || final_pos > last_pos)
+      {
+         return false;
+      }
+
+      if(text.substr(pos, value.size()) != value)
+      {
+         return false;
+      }
+      pos += value.size();
+
+      return true;
+   }
+
+   LanguageExpression::Command* LanguageExpression::STRCommand::copy() const
+   {
+      return new STRCommand(value);
+   }
+
+   string LanguageExpression::STRCommand::toString() const
+   {
+      return string("STR(\"") + value + "\")";
    }
 }
