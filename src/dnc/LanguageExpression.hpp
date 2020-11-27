@@ -85,6 +85,24 @@ namespace dnc
          std::string value;
       };
 
+      class NUMCommand : public Command
+      {
+      public:
+         NUMCommand();
+         NUMCommand(double num);
+         NUMCommand(double min_num, double max_num);
+         ~NUMCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         double min_num;
+         double max_num;
+      };
+
       struct CommandToken
       {
          enum Type

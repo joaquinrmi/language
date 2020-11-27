@@ -1,5 +1,6 @@
 #include "LanguageExpression.hpp"
 
+#include "StringUtils.hpp"
 #include "UTF8Analyzer.hpp"
 #include "UTF8Tokenizator.hpp"
 
@@ -41,6 +42,21 @@ namespace dnc
 
          command = new STRCommand(move(args[0].value));
          return true;
+      }},
+
+      {"NUM", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+         if(args.size() == 1)
+         {
+            command = new NUMCommand(atof(args[0].value.c_str()));
+            return true;
+         }
+         else if(args.size() == 2)
+         {
+            command = new NUMCommand(atof(args[0].value.c_str()), atof(args[1].value.c_str()));
+            return true;
+         }
+
+         return false;
       }}
    };
 
@@ -453,5 +469,68 @@ namespace dnc
    string LanguageExpression::STRCommand::toString() const
    {
       return string("STR(\"") + value + "\")";
+   }
+
+   /*
+      class LanguageExpression::NUMCommand
+   */
+   LanguageExpression::NUMCommand::NUMCommand()
+   {}
+
+   LanguageExpression::NUMCommand::NUMCommand(double num) :
+      min_num(num),
+      max_num(num)
+   {}
+
+   LanguageExpression::NUMCommand::NUMCommand(double min, double max) :
+      min_num(min),
+      max_num(max)
+   {}
+
+   LanguageExpression::NUMCommand::~NUMCommand()
+   {}
+
+   bool LanguageExpression::NUMCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      TextToken token;
+      if(!UTF8Tokenizator::getToken(text, pos, token).ok())
+      {
+         return false;
+      }
+
+      if(token.type != TextToken::NUMBER)
+      {
+         return false;
+      }
+
+      pos += token.value.size();
+
+      double num = atof(token.value.c_str());
+      if(num >= min_num && num <= max_num)
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   LanguageExpression::Command* LanguageExpression::NUMCommand::copy() const
+   {
+      return new NUMCommand(min_num, max_num);
+   }
+
+   string LanguageExpression::NUMCommand::toString() const
+   {
+      if(max_num == min_num)
+      {
+         return string("NUM(") + dnc::toString(min_num) + ")";
+      }
+	  
+	  return string("NUM(") + dnc::toString(min_num) + "," + dnc::toString(max_num) + ")";
    }
 }
