@@ -1,13 +1,25 @@
 #include "LanguageExpression.hpp"
 
+#include "UTF8Analyzer.hpp"
+#include "UTF8Tokenizator.hpp"
+
 using namespace std;
 
 namespace dnc
 {
    const map<string, LanguageExpression::CommandCreator> LanguageExpression::COMMAND_CREATORS = {
-      {"UCHAR", [](Command*& command, const string& expression, uint32_t& pos, uint32_t last_pos) -> bool {
-         command = new UCHARCommand("0");
-         pos += 2;
+      {"UCHAR", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+         if(args.size() != 1)
+         {
+            return false;
+         }
+
+         if(args[0].char_count != 1)
+         {
+            return false;
+         }
+
+         command = new UCHARCommand(args[0].value);
          return true;
       }}
    };
@@ -70,6 +82,18 @@ namespace dnc
       }
    }
 
+   string LanguageExpression::toString() const
+   {
+      string result;
+
+      for(uint32_t i = 0; i < command_sequence.size(); ++i)
+      {
+         result += command_sequence[i]->toString();
+      }
+
+      return result;
+   }
+
    bool LanguageExpression::createCommand(Command*& command, const string& expression, uint32_t& pos, uint32_t last_pos)
    {
       uint32_t command_begin = pos;
@@ -90,6 +114,7 @@ namespace dnc
       }
 
       string command_name = expression.substr(command_begin, pos - command_begin);
+      ++pos;
 
       auto found = COMMAND_CREATORS.find(command_name);
       if(found == COMMAND_CREATORS.end())
@@ -97,7 +122,145 @@ namespace dnc
          return false;
       }
 
-      return found->second(command, expression, ++pos, last_pos);
+      CommandArgs args;
+      if(!getCommandArgs(args, expression, pos, last_pos))
+      {
+         return false;
+      }
+
+      if(!found->second(command, args))
+      {
+         return false;
+      }
+
+      return true;
+   }
+
+   bool LanguageExpression::getCommandArgs(CommandArgs& args, const string& expression, uint32_t& pos, uint32_t last_pos)
+   {
+      if(pos >= last_pos || pos >= expression.size())
+      {
+         return false;
+      }
+
+      while(true)
+      {
+         TextToken token;
+         if(!UTF8Tokenizator::getToken(expression, pos, token).ok())
+         {
+            return false;
+         }
+         pos += token.value.size();
+
+         switch(token.type)
+         {
+         case TextToken::SPACE:
+            continue;
+            break;
+
+         case TextToken::SYMBOL:
+            if(token.value != "\"")
+            {
+               return false;
+            }
+
+            if(!getStringToken(args, expression, pos, last_pos))
+            {
+               return false;
+            }
+
+            break;
+
+         case TextToken::WORD:
+            return false;
+
+         case TextToken::NUMBER:
+            args.push_back({ CommandToken::NUMBER, token.value, token.char_count });
+            break;
+         }
+
+         if(pos >= expression.size() || pos >= last_pos)
+         {
+            return false;
+         }
+
+         if(expression[pos] == ',')
+         {
+            ++pos;
+            continue;
+         }
+
+         if(expression[pos] == ')')
+         {
+            ++pos;
+            break;
+         }
+
+         return false;
+      }
+
+      return true;
+   }
+
+   bool LanguageExpression::getStringToken(CommandArgs& args, const string& expression, uint32_t& pos, uint32_t last_pos)
+   {
+      CommandToken command_token;
+      command_token.type = CommandToken::STRING;
+      command_token.char_count = 0;
+
+      bool active_escape = false;
+      while(true)
+      {
+         if(pos >= expression.size() || pos >= last_pos)
+         {
+            return false;
+         }
+
+         TextToken token;
+         if(!UTF8Tokenizator::getToken(expression, pos, token).ok())
+         {
+            return false;
+         }
+         pos += token.value.size();
+
+         if(token.type == TextToken::SYMBOL)
+         {
+            if(token.value == "\"")
+            {
+               if(active_escape)
+               {
+                  active_escape = false;
+               }
+               else
+               {
+                  break;
+               }
+            }
+            else if(token.value == "\\")
+            {
+               if(active_escape)
+               {
+                  active_escape = false;
+               }
+               else
+               {
+                  active_escape = true;
+                  continue;
+               }
+            }
+         }
+         else if(active_escape)
+         {
+            return false;
+         }
+
+         command_token.value += token.value;
+         command_token.char_count += token.char_count;
+      }
+
+      args.push_back(command_token);
+
+      return true;
    }
 
    /*

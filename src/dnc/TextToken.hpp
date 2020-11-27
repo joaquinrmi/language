@@ -21,5 +21,6 @@ namespace dnc
 
       Type type;
       std::string value;
+      uint32_t char_count;
    };
 }

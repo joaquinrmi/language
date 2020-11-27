@@ -5,6 +5,8 @@
 #include <string>
 #include <functional>
 
+#include "TextToken.hpp"
+
 namespace dnc
 {
    class LanguageExpression
@@ -18,6 +20,8 @@ namespace dnc
       bool create(const std::string& expression, uint32_t init_pos, uint32_t last_pos);
 
       void clear();
+
+      std::string toString() const;
 
    private:
       class Command
@@ -45,12 +49,28 @@ namespace dnc
          std::string unique_char;
       };
 
-      typedef std::function<bool(Command*&, const std::string&, uint32_t&, uint32_t)> CommandCreator;
+      struct CommandToken
+      {
+         enum Type
+         {
+            STRING,
+            NUMBER
+         };
+
+         Type type;
+         std::string value;
+         uint32_t char_count;
+      };
+
+      typedef std::vector<CommandToken> CommandArgs; 
+      typedef std::function<bool(Command*&, CommandArgs&)> CommandCreator;
 
       static const std::map<std::string, CommandCreator> COMMAND_CREATORS;
 
       std::vector<Command*> command_sequence;
 
       bool createCommand(Command*& command, const std::string& expression, uint32_t& pos, uint32_t last_pos);
+      bool getCommandArgs(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);
+      bool getStringToken(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);
    };
 }

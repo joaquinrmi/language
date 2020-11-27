@@ -50,6 +50,7 @@ namespace dnc
          {
             target.type = TextToken::SPACE;
             target.value = text.substr(pos, char_count);
+            target.char_count = 1;
 
             auto pos2 = pos + 1;
             while(true)
@@ -72,6 +73,7 @@ namespace dnc
                }
 
                target.value += text.substr(pos2, char_count_2);
+               target.char_count += 1;
                ++pos2;
             }
 
@@ -82,6 +84,7 @@ namespace dnc
          {
             target.type = TextToken::SYMBOL;
             target.value = text.substr(pos, char_count);
+            target.char_count = 1;
             return TextStatus();
          }
 
@@ -89,6 +92,7 @@ namespace dnc
          {
             target.type = TextToken::NUMBER;
             target.value = text.substr(pos, char_count);
+            target.char_count = 1;
 
             bool added_point = false;
 
@@ -122,6 +126,7 @@ namespace dnc
                }
 
                target.value += text.substr(pos2, char_count_2);
+               target.char_count += 1;
                ++pos2;
             }
 
@@ -131,6 +136,7 @@ namespace dnc
          case C_LETTER:
             target.type = TextToken::WORD;
             target.value = text.substr(pos, char_count);
+            target.char_count = 1;
 
             auto pos2 = pos + 1;
             while(true)
@@ -153,6 +159,7 @@ namespace dnc
                }
 
                target.value += text.substr(pos2, char_count_2);
+               target.char_count += 1;
                ++pos2;
             }
 
@@ -162,6 +169,7 @@ namespace dnc
 
       target.type = TextToken::SYMBOL;
       target.value = text.substr(pos, char_count);
+      target.char_count = 1;
       return TextStatus();
    }
 }
