@@ -1,5 +1,7 @@
 #include "LanguageExpression.hpp"
 
+#include <iostream>
+
 #include "StringUtils.hpp"
 #include "UTF8Analyzer.hpp"
 #include "UTF8Tokenizator.hpp"
@@ -45,14 +47,37 @@ namespace dnc
       }},
 
       {"NUM", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
-         if(args.size() == 1)
+         if(args.size() == 0)
          {
-            command = new NUMCommand(atof(args[0].value.c_str()));
+            command = new NUMCommand(0, 9);
+         }
+         else if(args.size() == 1)
+         {
+            double num = atof(args[0].value.c_str());
+            if(num < 0 || num > 9)
+            {
+               return false;
+            }
+            command = new NUMCommand(num);
             return true;
          }
          else if(args.size() == 2)
          {
-            command = new NUMCommand(atof(args[0].value.c_str()), atof(args[1].value.c_str()));
+            double num1 = atof(args[0].value.c_str());
+            if(num1 < 0 || num1 > 9)
+            {
+               return false;
+            }
+            double num2 = atof(args[1].value.c_str());
+            if(num2 < 0 || num2 > 9)
+            {
+               return false;
+            }
+            if(num2 < num1)
+            {
+               return false;
+            }
+            command = new NUMCommand(num1, num2);
             return true;
          }
 
@@ -171,6 +196,12 @@ namespace dnc
    bool LanguageExpression::createCommand(Command*& command, const string& expression, uint32_t& pos, uint32_t last_pos)
    {
       uint32_t command_begin = pos;
+
+      if(expression[pos] == '-' || expression[pos] == '_')
+      {
+         CommandArgs args;
+         return COMMAND_CREATORS.at(expression.substr(pos++, 1))(command, args);
+      }
 
       while(true)
       {
@@ -528,9 +559,11 @@ namespace dnc
          return false;
       }
 
-      pos += token.value.size();
+      string str_num = token.value.substr(0, 1);
+      double num = atof(str_num.c_str());
 
-      double num = atof(token.value.c_str());
+      pos += 1;
+
       if(num >= min_num && num <= max_num)
       {
          return true;
