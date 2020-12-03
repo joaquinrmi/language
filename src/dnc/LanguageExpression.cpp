@@ -84,6 +84,29 @@ namespace dnc
          return false;
       }},
 
+      {"NUMT", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+         if(args.size() == 0)
+         {
+            command = new NUMTCommand();
+            return true;
+         }
+         else if(args.size() == 1)
+         {
+            double num = atof(args[0].value.c_str());
+            command = new NUMTCommand(num);
+            return true;
+         }
+         else if(args.size() == 2)
+         {
+            double num1 = atof(args[0].value.c_str());
+            double num2 = atof(args[1].value.c_str());
+            command = new NUMTCommand(num1, num2);
+            return true;
+         }
+
+         return false;
+      }},
+
       {"_", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
          if(args.size() != 0)
          {
@@ -528,12 +551,12 @@ namespace dnc
    LanguageExpression::NUMCommand::NUMCommand()
    {}
 
-   LanguageExpression::NUMCommand::NUMCommand(double num) :
+   LanguageExpression::NUMCommand::NUMCommand(uint8_t num) :
       min_num(num),
       max_num(num)
    {}
 
-   LanguageExpression::NUMCommand::NUMCommand(double min, double max) :
+   LanguageExpression::NUMCommand::NUMCommand(uint8_t min, uint8_t max) :
       min_num(min),
       max_num(max)
    {}
@@ -585,6 +608,88 @@ namespace dnc
       }
 	  
 	  return string("NUM(") + dnc::toString(min_num) + "," + dnc::toString(max_num) + ")";
+   }
+
+   /*
+      class LanguageExpression::NUMTCommand
+   */
+   LanguageExpression::NUMTCommand::NUMTCommand() :
+      use_range(false)
+   {}
+
+   LanguageExpression::NUMTCommand::NUMTCommand(double num) :
+      use_range(true),
+      min_num(num),
+      max_num(num)
+   {}
+
+   LanguageExpression::NUMTCommand::NUMTCommand(double min, double max) :
+      use_range(true),
+      min_num(min),
+      max_num(max)
+   {}
+
+   LanguageExpression::NUMTCommand::~NUMTCommand()
+   {}
+
+   bool LanguageExpression::NUMTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      TextToken token;
+      if(!UTF8Tokenizator::getToken(text, pos, token).ok())
+      {
+         return false;
+      }
+
+      if(token.type != TextToken::NUMBER)
+      {
+         return false;
+      }
+
+      pos += token.char_count;
+
+      if(!use_range)
+      {
+         return true;
+      }
+
+      double num = atof(token.value.c_str());
+
+      if(num >= min_num && num <= max_num)
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   LanguageExpression::Command* LanguageExpression::NUMTCommand::copy() const
+   {
+      if(use_range)
+      {
+         return new NUMTCommand(min_num, max_num);
+      }
+
+      return new NUMTCommand();
+   }
+
+   string LanguageExpression::NUMTCommand::toString() const
+   {
+      if(!use_range)
+      {
+         return "NUMT()";
+      }
+
+      if(max_num == min_num)
+      {
+         return string("NUMT(") + dnc::toString(min_num) + ")";
+      }
+     
+     return string("NUMT(") + dnc::toString(min_num) + "," + dnc::toString(max_num) + ")";
    }
 
    /*
