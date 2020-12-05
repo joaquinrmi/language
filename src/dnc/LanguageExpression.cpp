@@ -54,6 +54,10 @@ namespace dnc
          else if(args.size() == 1)
          {
             double num = atof(args[0].value.c_str());
+            if((num / uint64_t(num)) - 1 > 0)
+            {
+               return false;
+            }
             if(num < 0 || num > 9)
             {
                return false;
@@ -64,11 +68,19 @@ namespace dnc
          else if(args.size() == 2)
          {
             double num1 = atof(args[0].value.c_str());
+            if((num1 / uint64_t(num1)) - 1 > 0)
+            {
+               return false;
+            }
             if(num1 < 0 || num1 > 9)
             {
                return false;
             }
             double num2 = atof(args[1].value.c_str());
+            if((num2 / uint64_t(num2)) - 1 > 0)
+            {
+               return false;
+            }
             if(num2 < 0 || num2 > 9)
             {
                return false;
@@ -101,6 +113,41 @@ namespace dnc
             double num1 = atof(args[0].value.c_str());
             double num2 = atof(args[1].value.c_str());
             command = new NUMTCommand(num1, num2);
+            return true;
+         }
+
+         return false;
+      }},
+
+      {"INUMT", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+         if(args.size() == 0)
+         {
+            command = new INUMTCommand();
+            return true;
+         }
+         else if(args.size() == 1)
+         {
+            double num = atof(args[0].value.c_str());
+            if((num / uint64_t(num)) - 1 > 0)
+            {
+               return false;
+            }
+            command = new INUMTCommand(num);
+            return true;
+         }
+         else if(args.size() == 2)
+         {
+            double num1 = atof(args[0].value.c_str());
+            if((num1 / uint64_t(num1)) - 1 > 0)
+            {
+               return false;
+            }
+            double num2 = atof(args[1].value.c_str());
+            if((num2 / uint64_t(num2)) - 1 > 0)
+            {
+               return false;
+            }
+            command = new INUMTCommand(num1, num2);
             return true;
          }
 
@@ -551,12 +598,12 @@ namespace dnc
    LanguageExpression::NUMCommand::NUMCommand()
    {}
 
-   LanguageExpression::NUMCommand::NUMCommand(uint8_t num) :
+   LanguageExpression::NUMCommand::NUMCommand(uint16_t num) :
       min_num(num),
       max_num(num)
    {}
 
-   LanguageExpression::NUMCommand::NUMCommand(uint8_t min, uint8_t max) :
+   LanguageExpression::NUMCommand::NUMCommand(uint16_t min, uint16_t max) :
       min_num(min),
       max_num(max)
    {}
@@ -690,6 +737,92 @@ namespace dnc
       }
      
      return string("NUMT(") + dnc::toString(min_num) + "," + dnc::toString(max_num) + ")";
+   }
+
+   /*
+      class LanguageExpression::INUMTCommand
+   */
+   LanguageExpression::INUMTCommand::INUMTCommand() :
+      use_range(false)
+   {}
+
+   LanguageExpression::INUMTCommand::INUMTCommand(uint64_t num) :
+      use_range(true),
+      min_num(num),
+      max_num(num)
+   {}
+
+   LanguageExpression::INUMTCommand::INUMTCommand(uint64_t min, uint64_t max) :
+      use_range(true),
+      min_num(min),
+      max_num(max)
+   {}
+
+   LanguageExpression::INUMTCommand::~INUMTCommand()
+   {}
+
+   bool LanguageExpression::INUMTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      TextToken token;
+      if(!UTF8Tokenizator::getToken(text, pos, token).ok())
+      {
+         return false;
+      }
+
+      if(token.type != TextToken::NUMBER)
+      {
+         return false;
+      }
+
+      pos += token.char_count;
+
+      double num = atof(token.value.c_str());
+      if((num / uint64_t(num)) - 1 > 0)
+      {
+         return false;
+      }
+
+      if(!use_range)
+      {
+         return true;
+      }
+
+      if(num >= min_num && num <= max_num)
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   LanguageExpression::Command* LanguageExpression::INUMTCommand::copy() const
+   {
+      if(use_range)
+      {
+         return new INUMTCommand(min_num, max_num);
+      }
+
+      return new INUMTCommand();
+   }
+
+   string LanguageExpression::INUMTCommand::toString() const
+   {
+      if(!use_range)
+      {
+         return "INUMT()";
+      }
+
+      if(max_num == min_num)
+      {
+         return string("INUMT(") + dnc::toString(min_num) + ")";
+      }
+     
+     return string("INUMT(") + dnc::toString(min_num) + "," + dnc::toString(max_num) + ")";
    }
 
    /*

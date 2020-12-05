@@ -89,8 +89,8 @@ namespace dnc
       {
       public:
          NUMCommand();
-         NUMCommand(uint8_t num);
-         NUMCommand(uint8_t min_num, uint8_t max_num);
+         NUMCommand(uint16_t num);
+         NUMCommand(uint16_t min_num, uint16_t max_num);
          ~NUMCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
@@ -99,8 +99,8 @@ namespace dnc
          std::string toString() const override;
 
       private:
-         uint8_t min_num;
-         uint8_t max_num;
+         uint16_t min_num;
+         uint16_t max_num;
       };
 
       class NUMTCommand : public Command
@@ -120,6 +120,25 @@ namespace dnc
          bool use_range;
          double min_num;
          double max_num;
+      };
+
+      class INUMTCommand : public Command
+      {
+      public:
+         INUMTCommand();
+         INUMTCommand(uint64_t num);
+         INUMTCommand(uint64_t min_num, uint64_t max_num);
+         ~INUMTCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         bool use_range;
+         uint64_t min_num;
+         uint64_t max_num;
       };
 
       class BLANKCommand : public Command
