@@ -94,10 +94,10 @@ exp.check("a;var");     // true
 ### `REP()`
 
 ```cpp
-REP::REP(const std::vector<Command*>& commands, uint32_t min = 1, uint32_t max = 4294967295);
+REP::REP(const std::vector<Command*>& sequence, uint32_t min = 1, uint32_t max = 4294967295);
 ```
 
-Define una repetición de la secuencia de comandos especificada en `commands`. `min` y `max` son la cantidad mínima y máxima de repeticiones de la secuencia, respectivamente.
+Define una repetición de la secuencia de comandos especificada en `sequence`. `min` y `max` son la cantidad mínima y máxima de repeticiones de la secuencia, respectivamente.
 
 Ejemplo de repetición con números:
 ```cpp
@@ -109,6 +109,35 @@ LanguageExpression exp("REP(NUM(0,1),4,8)");
 
 exp.check("10001");    // true
 exp.check("1021");     // false
+```
+
+### `REPIF()`
+
+```cpp
+REPIF::REPIF(const std::vector<Command*>& sequence, const std::vector<Command*>& condition, bool ignore = false, uint32_t min = 1, uint32_t max = 4294967295);
+```
+
+Define una repetición condicional. La secuencia que se debe repetir es `sequence` y la condición para que se evalue una nueva repetición es `condition`. El parámetro `ignore` controla la última repetición: si su valor es `false`, entonces la secuencia no podrá terminar en `condition` y si su valor es `true`, la secuencia podrá terminar en `condition`. Los parámetros `min` y `max` controlan la cantidad de repeticiones, al igual que con el comando `REP`.
+
+Ejemplo de repetición condicional con números:
+```cpp
+/*
+   En la siguiente expresión, NUM() es la secuencia de comandos a repetir
+   y UCHAR("-") es la condición para que haya una repetición.
+*/
+LanguageExpression exp("REPIF(NUM(),UCHAR(\"-\"))");
+
+exp.check("1-2-3-4");   // true
+exp.check("1-2-3-");    // false
+
+/*
+   Para que la segunda cadena se evalue como verdadera,
+   se define el parámetro 'ignore' como true.
+*/
+LanguageExpression exp("REPIF(NUM(),UCHAR(\"-\"),true)");
+
+exp.check("1-2-3-4");   // true
+exp.check("1-2-3-");    // true
 ```
 
 ## Características técnicas

@@ -170,7 +170,27 @@ namespace dnc
       public:
          REPCommand();
          REPCommand(const std::vector<Command*>& commands, uint32_t min = 1, uint32_t max = -1);
-         ~REPCommand();
+         virtual ~REPCommand();
+
+         virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         virtual Command* copy() const override;
+         virtual std::string toString() const override;
+
+      protected:
+         std::vector<Command*> commands;
+         uint32_t min;
+         uint32_t max;
+
+         bool checkCommands(const std::vector<Command*>& commands, const std::string& text, uint32_t& pos, uint32_t last_pos) const;
+      };
+
+      class REPIFCommand : public REPCommand
+      {
+      public:
+         REPIFCommand();
+         REPIFCommand(const std::vector<Command*>& sequence, const std::vector<Command*>& condition, bool ignore = false, uint32_t min = 1, uint32_t max = -1);
+         ~REPIFCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
@@ -178,17 +198,15 @@ namespace dnc
          std::string toString() const override;
 
       private:
-         std::vector<Command*> commands;
-         uint32_t min;
-         uint32_t max;
-
-         bool checkCommands(const std::string& text, uint32_t& pos, uint32_t last_pos) const;
+         std::vector<Command*> condition;
+         bool ignore;
       };
 
       struct CommandToken
       {
          enum Type
          {
+            BOOLEAN,
             STRING,
             NUMBER,
             COMMAND_SEQUENCE

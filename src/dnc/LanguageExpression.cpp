@@ -214,6 +214,74 @@ namespace dnc
 
          command = new REPCommand(command_sequence, atof(args[1].value.c_str()), atof(args[2].value.c_str()));
          return true;
+      }},
+
+      {"REPIF", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() < 2 || args.size() > 5)
+         {
+            return false;
+         }
+
+         uint32_t pos = 0;
+         string& seq_expression = args[0].value;
+         vector<Command*> command_sequence;
+         while(pos < seq_expression.size())
+         {
+            Command* current_command;
+            if(!scope.createCommand(current_command, seq_expression, pos, seq_expression.size()))
+            {
+               for(auto c : command_sequence)
+               {
+                  delete c;
+               }
+
+               return false;
+            }
+
+            command_sequence.push_back(current_command);
+         }
+
+         pos = 0;
+         string& con_expression = args[1].value;
+         vector<Command*> condition_sequence;
+         while(pos < con_expression.size())
+         {
+            Command* current_command;
+            if(!scope.createCommand(current_command, con_expression, pos, con_expression.size()))
+            {
+               for(auto c : condition_sequence)
+               {
+                  delete c;
+               }
+
+               return false;
+            }
+
+            condition_sequence.push_back(current_command);
+         }
+
+         if(args.size() == 2)
+         {
+            command = new REPIFCommand(command_sequence, condition_sequence);
+            return true;
+         }
+
+         bool ignore = args[2].value == "true" ? true : false;
+
+         if(args.size() == 3)
+         {
+            
+            command = new REPIFCommand(command_sequence, condition_sequence, ignore);
+            return true;
+         }
+         if(args.size() == 4)
+         {
+            command = new REPIFCommand(command_sequence, condition_sequence, ignore, atof(args[3].value.c_str()));
+            return true;
+         }
+
+         command = new REPIFCommand(command_sequence, condition_sequence, ignore, atof(args[3].value.c_str()), atof(args[4].value.c_str()));
+         return true;
       }}
    };
 
@@ -403,6 +471,12 @@ namespace dnc
             break;
 
          case TextToken::WORD:
+            if(token.value == "true" || token.value == "false")
+            {
+               args.push_back({ CommandToken::BOOLEAN, token.value, token.char_count });
+               break;
+            }
+
             pos -= token.value.size();
 
             if(!getCommandSequenceToken(args, expression, pos, last_pos))
@@ -1073,7 +1147,7 @@ namespace dnc
       uint32_t current_pos = pos;
       while(true)
       {
-         if(!checkCommands(text, current_pos, last_pos))
+         if(!checkCommands(commands, text, current_pos, last_pos))
          {
             break;
          }
@@ -1124,7 +1198,7 @@ namespace dnc
       return result;
    }
 
-   bool LanguageExpression::REPCommand::checkCommands(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::REPCommand::checkCommands(const vector<Command*>& commands, const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       uint32_t current_pos = pos;
       for(uint32_t i = 0; i < commands.size(); ++i)
@@ -1137,5 +1211,118 @@ namespace dnc
 
       pos = current_pos;
       return true;
+   }
+
+   /*
+      class LanguageExpression::REPIFCommand
+   */
+   LanguageExpression::REPIFCommand::REPIFCommand()
+   {}
+
+   LanguageExpression::REPIFCommand::REPIFCommand(const vector<Command*>& sequence, const vector<Command*>& condition, bool ignore, uint32_t min, uint32_t max) :
+      REPCommand(sequence, min, max),
+      condition(condition),
+      ignore(ignore)
+   {}
+
+   LanguageExpression::REPIFCommand::~REPIFCommand()
+   {
+      for(auto c : condition)
+      {
+         delete c;
+      }
+   }
+
+   bool LanguageExpression::REPIFCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      uint32_t repeated = 0;
+      uint32_t current_pos = pos;
+      bool condition_found = false;
+      while(true)
+      {
+         if(!checkCommands(commands, text, current_pos, last_pos))
+         {
+            if(condition_found && !ignore)
+            {
+               return false;
+            }
+            break;
+         }
+
+         repeated += 1;
+
+         if(!checkCommands(condition, text, current_pos, last_pos))
+         {
+            break;
+         }
+         condition_found = true;
+      }
+
+      pos = current_pos;
+
+      if(repeated >= min && repeated <= max)
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   LanguageExpression::Command* LanguageExpression::REPIFCommand::copy() const
+   {
+      vector<Command*> copied_sequence;
+      for(auto c : commands)
+      {
+         copied_sequence.push_back(c->copy());
+      }
+
+      vector<Command*> copied_condition;
+      for(auto c : condition)
+      {
+         copied_condition.push_back(c->copy());
+      }
+
+      return new REPIFCommand(copied_sequence, condition, ignore, min, max);
+   }
+
+   string LanguageExpression::REPIFCommand::toString() const
+   {
+      string sequence_str;
+      for(auto c : commands)
+      {
+         sequence_str += c->toString();
+      }
+
+      string condition_str;
+      for(auto c : condition)
+      {
+         condition_str += c->toString();
+      }
+
+      string result = string("REPIF(") + sequence_str + "," + condition_str;
+      if(ignore)
+      {
+         result += ",true";
+      }
+      if(min != 1 || max != uint32_t(-1))
+      {
+         if(!ignore)
+         {
+            result += ",false";
+         }
+         result += "," + dnc::toString(min);
+      }
+      if(max != uint32_t(-1))
+      {
+         result += "," + dnc::toString(max);
+      }
+      result += ")";
+
+      return result;
    }
 }
