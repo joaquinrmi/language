@@ -165,12 +165,33 @@ namespace dnc
          std::string toString() const override;
       };
 
+      class REPCommand : public Command
+      {
+      public:
+         REPCommand();
+         REPCommand(const std::vector<Command*>& commands, uint32_t min = 1, uint32_t max = -1);
+         ~REPCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         std::vector<Command*> commands;
+         uint32_t min;
+         uint32_t max;
+
+         bool checkCommands(const std::string& text, uint32_t& pos, uint32_t last_pos) const;
+      };
+
       struct CommandToken
       {
          enum Type
          {
             STRING,
-            NUMBER
+            NUMBER,
+            COMMAND_SEQUENCE
          };
 
          Type type;
@@ -178,15 +199,23 @@ namespace dnc
          uint32_t char_count;
       };
 
+      struct CommandScope
+      {
+         std::function<bool(Command*&, const std::string&, uint32_t&, uint32_t)> createCommand;
+         std::vector<LanguageExpression*> expressions;
+      };
+
       typedef std::vector<CommandToken> CommandArgs; 
-      typedef std::function<bool(Command*&, CommandArgs&)> CommandCreator;
+      typedef std::function<bool(Command*&, CommandArgs&, CommandScope&)> CommandCreator;
 
       static const std::map<std::string, CommandCreator> COMMAND_CREATORS;
 
       std::vector<Command*> command_sequence;
+      CommandScope command_scope;
 
       bool createCommand(Command*& command, const std::string& expression, uint32_t& pos, uint32_t last_pos);
       bool getCommandArgs(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);
       bool getStringToken(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);
+      bool getCommandSequenceToken(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);
    };
 }

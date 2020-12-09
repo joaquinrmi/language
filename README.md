@@ -58,6 +58,25 @@ INUMT::INUMT(double min_num, double max_num);
 
 ### `-`
 
+### `REP()`
+
+```cpp
+REP::REP(const std::vector<Command*>& commands, uint32_t min = 1, uint32_t max = 4294967295);
+```
+
+Define una repetición de la secuencia de comandos especificada en `commands`. `min` y `max` son la cantidad mínima y máxima de repeticiones de la secuencia, respectivamente.
+
+Ejemplo de repetición con números:
+```cpp
+/*
+La siguiente expresión valida cadenas formadas por "0" y "1" con un mínimo de cuatro dígitos y un máximo de 8.
+*/
+LanguageExpression exp("REP(NUM(0,1),4,8)");
+
+e.check("10001");    // true
+e.check("1021");     // false
+```
+
 ## Características técnicas
 
 * Las cadenas de texto analizadas deben de estar en formato `UTF-8`.

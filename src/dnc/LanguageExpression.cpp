@@ -11,7 +11,7 @@ using namespace std;
 namespace dnc
 {
    const map<string, LanguageExpression::CommandCreator> LanguageExpression::COMMAND_CREATORS = {
-      {"UCHAR", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+      {"UCHAR", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() != 1)
          {
             return false;
@@ -26,7 +26,7 @@ namespace dnc
          return true;
       }},
 
-      {"CHAR", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+      {"CHAR", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() != 0)
          {
             return false;
@@ -36,7 +36,7 @@ namespace dnc
          return true;
       }},
 
-      {"STR", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+      {"STR", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() != 1)
          {
             return false;
@@ -46,7 +46,7 @@ namespace dnc
          return true;
       }},
 
-      {"NUM", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+      {"NUM", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() == 0)
          {
             command = new NUMCommand(0, 9);
@@ -96,7 +96,7 @@ namespace dnc
          return false;
       }},
 
-      {"NUMT", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+      {"NUMT", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() == 0)
          {
             command = new NUMTCommand();
@@ -119,7 +119,7 @@ namespace dnc
          return false;
       }},
 
-      {"INUMT", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+      {"INUMT", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() == 0)
          {
             command = new INUMTCommand();
@@ -154,7 +154,7 @@ namespace dnc
          return false;
       }},
 
-      {"_", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+      {"_", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() != 0)
          {
             return false;
@@ -164,7 +164,7 @@ namespace dnc
          return true;
       }},
 
-      {"-", [](Command*& command, LanguageExpression::CommandArgs& args) -> bool {
+      {"-", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() != 0)
          {
             return false;
@@ -173,13 +173,64 @@ namespace dnc
          command = new OPTBLANKCommand();
          return true;
       }},
+
+      {"REP", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() == 0 || args.size() > 3)
+         {
+            return false;
+         }
+
+         string& expression = args[0].value;
+
+         uint32_t pos = 0;
+
+         vector<Command*> command_sequence;
+         while(pos < expression.size())
+         {
+            Command* current_command;
+            if(!scope.createCommand(current_command, expression, pos, expression.size()))
+            {
+               for(auto c : command_sequence)
+               {
+                  delete c;
+               }
+
+               return false;
+            }
+
+            command_sequence.push_back(current_command);
+         }
+
+         if(args.size() == 1)
+         {
+            command = new REPCommand(command_sequence);
+            return true;
+         }
+         else if(args.size() == 2)
+         {
+            command = new REPCommand(command_sequence, atof(args[1].value.c_str()));
+            return true;
+         }
+
+         command = new REPCommand(command_sequence, atof(args[1].value.c_str()), atof(args[2].value.c_str()));
+         return true;
+      }}
    };
 
    LanguageExpression::LanguageExpression()
-   {}
+   {
+      command_scope.createCommand = [this](Command*& a, const std::string& b, uint32_t& c, uint32_t d) -> bool
+      {
+         return this->createCommand(a, b, c, d);
+      };
+   }
 
    LanguageExpression::LanguageExpression(const string& expression)
    {
+      command_scope.createCommand = [this](Command*& a, const std::string& b, uint32_t& c, uint32_t d) -> bool
+      {
+         return this->createCommand(a, b, c, d);
+      };
       create(expression, 0);
    }
 
@@ -270,7 +321,7 @@ namespace dnc
       if(expression[pos] == '-' || expression[pos] == '_')
       {
          CommandArgs args;
-         return COMMAND_CREATORS.at(expression.substr(pos++, 1))(command, args);
+         return COMMAND_CREATORS.at(expression.substr(pos++, 1))(command, args, command_scope);
       }
 
       while(true)
@@ -303,7 +354,7 @@ namespace dnc
          return false;
       }
 
-      if(!found->second(command, args))
+      if(!found->second(command, args, command_scope))
       {
          return false;
       }
@@ -352,7 +403,14 @@ namespace dnc
             break;
 
          case TextToken::WORD:
-            return false;
+            pos -= token.value.size();
+
+            if(!getCommandSequenceToken(args, expression, pos, last_pos))
+            {
+               return false;
+            }
+
+            break;
 
          case TextToken::NUMBER:
             args.push_back({ CommandToken::NUMBER, token.value, token.char_count });
@@ -438,6 +496,72 @@ namespace dnc
          command_token.char_count += token.char_count;
       }
 
+      args.push_back(command_token);
+
+      return true;
+   }
+
+   bool LanguageExpression::getCommandSequenceToken(CommandArgs& args, const string& expression, uint32_t& pos, uint32_t last_pos)
+   {
+      CommandToken command_token;
+      command_token.type = CommandToken::COMMAND_SEQUENCE;
+      command_token.char_count = 0;
+
+      uint32_t deep = 0;
+      bool finished = false;
+      uint32_t init_pos = pos;
+      
+      while(!finished)
+      {
+         if(pos >= last_pos || pos >= expression.size())
+         {
+            return false;
+         }
+
+         TextToken token;
+         if(!UTF8Tokenizator::getToken(expression, pos, token).ok())
+         {
+            return false;
+         }
+
+         pos += token.char_count;
+
+         switch(token.type)
+         {
+         case TextToken::SYMBOL:
+            if(token.value == "(")
+            {
+               deep += 1;
+               continue;
+            }
+            else if(token.value == ")")
+            {
+               if(deep == 0)
+               {
+                  finished = true;
+                  break;
+               }
+               deep -= 1;
+            }
+            else if(token.value == ",")
+            {
+               if(deep == 0)
+               {
+                  finished = true;
+                  break;
+               }
+            }
+            continue;
+            break;
+
+         default:
+            continue;
+         }
+      }
+
+      pos -= 1;
+      command_token.value = expression.substr(init_pos, pos - init_pos);
+      command_token.char_count = pos - init_pos;
       args.push_back(command_token);
 
       return true;
@@ -916,5 +1040,102 @@ namespace dnc
    string LanguageExpression::OPTBLANKCommand::toString() const
    {
       return "-";
+   }
+
+   /*
+      class LanguageExpression::REPCommand
+   */
+   LanguageExpression::REPCommand::REPCommand()
+   {}
+
+   LanguageExpression::REPCommand::REPCommand(const vector<Command*>& commands, uint32_t min, uint32_t max) :
+      commands(commands),
+      min(min),
+      max(max)
+   {}
+
+   LanguageExpression::REPCommand::~REPCommand()
+   {
+      for(auto c : commands)
+      {
+         delete c;
+      }
+   }
+
+   bool LanguageExpression::REPCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      uint32_t repeated = 0;
+      uint32_t current_pos = pos;
+      while(true)
+      {
+         if(!checkCommands(text, current_pos, last_pos))
+         {
+            break;
+         }
+
+         repeated += 1;
+      }
+
+      pos = current_pos;
+
+      if(repeated >= min && repeated <= max)
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   LanguageExpression::Command* LanguageExpression::REPCommand::copy() const
+   {
+      vector<Command*> copied_commands;
+      for(auto c : commands)
+      {
+         copied_commands.push_back(c->copy());
+      }
+
+      return new REPCommand(copied_commands, min, max);
+   }
+
+   string LanguageExpression::REPCommand::toString() const
+   {
+      string commands_str;
+      for(auto c : commands)
+      {
+         commands_str += c->toString();
+      }
+
+      string result = string("REP(") + commands_str;
+      if(min != 1 || max != uint32_t(-1))
+      {
+         result += "," + dnc::toString(min);
+      }
+      if(max != uint32_t(-1))
+      {
+         result += "," + dnc::toString(max);
+      }
+      result += ")";
+
+      return result;
+   }
+
+   bool LanguageExpression::REPCommand::checkCommands(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      uint32_t current_pos = pos;
+      for(uint32_t i = 0; i < commands.size(); ++i)
+      {
+         if(!commands[i]->check(text, current_pos, last_pos))
+         {
+            return false;
+         }
+      }
+
+      pos = current_pos;
+      return true;
    }
 }
