@@ -149,6 +149,23 @@ OR::OR(const std::vector<Command*>& first, const std::vecotr<Command*>& second);
 
 Define una condición lógica que significa "`first` o `last` o ambas".
 
+### `XOR()`
+
+```cpp
+XOR::XOR(const std::vector<Command*>& first, const std::vecotr<Command*>& second);
+```
+
+Define una condición lógica similar al XOR y funciona como "`first` o `last`, pero no se evalúa el caso en que ambas sean verdaderas". Esto puede dar lugar a que una expresión se evalúe como verdadera o como falsa, dependiendo de la secuencia de comandos en la que se encuentra el `XOR`.
+
+Ejemplo:
+```cpp
+LanguageExpression exp("XOR(NUM(0),NUM(1))NUM(2)");
+
+exp.check("02");     // true
+exp.check("12");     // true
+exp.check("012");    // false
+```
+
 ### `OPT()`
 
 ```cpp

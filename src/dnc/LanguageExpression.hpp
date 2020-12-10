@@ -223,6 +223,23 @@ namespace dnc
          std::vector<Command*> second;
       };
 
+      class XORCommand : public Command
+      {
+      public:
+         XORCommand();
+         XORCommand(const std::vector<Command*>& first, const std::vector<Command*>& second);
+         ~XORCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         std::vector<Command*> first;
+         std::vector<Command*> second;
+      };
+
       class OPTCommand : public Command
       {
       public:

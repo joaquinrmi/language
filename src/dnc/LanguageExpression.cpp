@@ -297,6 +297,31 @@ namespace dnc
          return true;
       }},
 
+      {"XOR", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() != 2)
+         {
+            return false;
+         }
+
+         vector<Command*> first, second;
+         string& first_expression = args[0].value;
+         string& second_expression = args[1].value;
+         uint32_t pos = 0;
+
+         if(!createCommandSequence(first, scope, first_expression, pos, first_expression.size()))
+         {
+            return false;
+         }
+
+         if(!createCommandSequence(second, scope, second_expression, pos, second_expression.size()))
+         {
+            return false;
+         }
+
+         command = new XORCommand(first, second);
+         return true;
+      }},
+
       {"OPT", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() != 1)
          {
@@ -1424,6 +1449,72 @@ namespace dnc
       }
 
       return string("OR(") + first_str + "," + second_str + ")";
+   }
+
+   /*
+      class LanguageExpression::XORCommand
+   */
+   LanguageExpression::XORCommand::XORCommand()
+   {}
+
+   LanguageExpression::XORCommand::XORCommand(const vector<Command*>& first, const vector<Command*>& second) :
+      first(first),
+      second(second)
+   {}
+
+   LanguageExpression::XORCommand::~XORCommand()
+   {
+      for(auto c : first)
+      {
+         delete c;
+      }
+
+      for(auto c : second)
+      {
+         delete c;
+      }
+   }
+
+   bool LanguageExpression::XORCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      if(checkCommands(first, text, pos, last_pos))
+      {
+         return true;
+      }
+
+      if(checkCommands(second, text, pos, last_pos))
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   LanguageExpression::Command* LanguageExpression::XORCommand::copy() const
+   {
+      return new XORCommand(first, second);
+   }
+
+   string LanguageExpression::XORCommand::toString() const
+   {
+      string first_str;
+      for(auto c : first)
+      {
+         first_str += c->toString();
+      }
+
+      string second_str;
+      for(auto c : second)
+      {
+         second_str += c->toString();
+      }
+
+      return string("XOR(") + first_str + "," + second_str + ")";
    }
 
    /*
