@@ -12,6 +12,24 @@ namespace dnc
    class LanguageExpression
    {
    public:
+      class Command
+      {
+      public:
+         Command();
+         virtual ~Command();
+
+         virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const = 0;
+
+         virtual Command* copy() const = 0;
+         virtual std::string toString() const = 0;
+      };
+
+      struct CommandScope
+      {
+         std::function<bool(Command*&, const std::string&, uint32_t&, uint32_t)> createCommand;
+         std::vector<LanguageExpression*> expressions;
+      };
+
       LanguageExpression();
       LanguageExpression(const std::string& expression);
       virtual ~LanguageExpression();
@@ -27,18 +45,6 @@ namespace dnc
       std::string toString() const;
 
    private:
-      class Command
-      {
-      public:
-         Command();
-         virtual ~Command();
-
-         virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const = 0;
-
-         virtual Command* copy() const = 0;
-         virtual std::string toString() const = 0;
-      };
-
       class UCHARCommand : public Command
       {
       public:
@@ -181,8 +187,6 @@ namespace dnc
          std::vector<Command*> commands;
          uint32_t min;
          uint32_t max;
-
-         bool checkCommands(const std::vector<Command*>& commands, const std::string& text, uint32_t& pos, uint32_t last_pos) const;
       };
 
       class REPIFCommand : public REPCommand
@@ -202,6 +206,23 @@ namespace dnc
          bool ignore;
       };
 
+      class ORCommand : public Command
+      {
+      public:
+         ORCommand();
+         ORCommand(const std::vector<Command*>& first, const std::vector<Command*>& second);
+         ~ORCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         std::vector<Command*> first;
+         std::vector<Command*> second;
+      };
+
       struct CommandToken
       {
          enum Type
@@ -217,12 +238,6 @@ namespace dnc
          uint32_t char_count;
       };
 
-      struct CommandScope
-      {
-         std::function<bool(Command*&, const std::string&, uint32_t&, uint32_t)> createCommand;
-         std::vector<LanguageExpression*> expressions;
-      };
-
       typedef std::vector<CommandToken> CommandArgs; 
       typedef std::function<bool(Command*&, CommandArgs&, CommandScope&)> CommandCreator;
 
@@ -230,6 +245,8 @@ namespace dnc
 
       std::vector<Command*> command_sequence;
       CommandScope command_scope;
+
+      static bool checkCommands(const std::vector<Command*>& commands, const std::string& text, uint32_t& pos, uint32_t last_pos);
 
       bool createCommand(Command*& command, const std::string& expression, uint32_t& pos, uint32_t last_pos);
       bool getCommandArgs(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);

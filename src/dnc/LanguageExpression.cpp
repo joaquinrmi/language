@@ -10,6 +10,27 @@ using namespace std;
 
 namespace dnc
 {
+   bool createCommandSequence(vector<LanguageExpression::Command*>& sequence, LanguageExpression::CommandScope& scope, const std::string& text, uint32_t pos, uint32_t last_pos)
+   {
+      while(pos < text.size())
+      {
+		 LanguageExpression::Command* current_command;
+         if(!scope.createCommand(current_command, text, pos, last_pos))
+         {
+            for(auto c : sequence)
+            {
+               delete c;
+            }
+
+            return false;
+         }
+
+         sequence.push_back(current_command);
+      }
+	  
+	  return true;
+   }
+
    const map<string, LanguageExpression::CommandCreator> LanguageExpression::COMMAND_CREATORS = {
       {"UCHAR", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
          if(args.size() != 1)
@@ -180,25 +201,13 @@ namespace dnc
             return false;
          }
 
+         vector<Command*> command_sequence;
          string& expression = args[0].value;
-
          uint32_t pos = 0;
 
-         vector<Command*> command_sequence;
-         while(pos < expression.size())
+         if(!createCommandSequence(command_sequence, scope, expression, pos, expression.size()))
          {
-            Command* current_command;
-            if(!scope.createCommand(current_command, expression, pos, expression.size()))
-            {
-               for(auto c : command_sequence)
-               {
-                  delete c;
-               }
-
-               return false;
-            }
-
-            command_sequence.push_back(current_command);
+            return false;
          }
 
          if(args.size() == 1)
@@ -222,42 +231,21 @@ namespace dnc
             return false;
          }
 
-         uint32_t pos = 0;
-         string& seq_expression = args[0].value;
          vector<Command*> command_sequence;
-         while(pos < seq_expression.size())
+         string& seq_expression = args[0].value;
+         uint32_t pos = 0;
+
+         if(!createCommandSequence(command_sequence, scope, seq_expression, pos, seq_expression.size()))
          {
-            Command* current_command;
-            if(!scope.createCommand(current_command, seq_expression, pos, seq_expression.size()))
-            {
-               for(auto c : command_sequence)
-               {
-                  delete c;
-               }
-
-               return false;
-            }
-
-            command_sequence.push_back(current_command);
+            return false;
          }
 
-         pos = 0;
-         string& con_expression = args[1].value;
          vector<Command*> condition_sequence;
-         while(pos < con_expression.size())
+         string& con_expression = args[1].value;
+
+         if(!createCommandSequence(condition_sequence, scope, con_expression, pos, con_expression.size()))
          {
-            Command* current_command;
-            if(!scope.createCommand(current_command, con_expression, pos, con_expression.size()))
-            {
-               for(auto c : condition_sequence)
-               {
-                  delete c;
-               }
-
-               return false;
-            }
-
-            condition_sequence.push_back(current_command);
+            return false;
          }
 
          if(args.size() == 2)
@@ -282,7 +270,32 @@ namespace dnc
 
          command = new REPIFCommand(command_sequence, condition_sequence, ignore, atof(args[3].value.c_str()), atof(args[4].value.c_str()));
          return true;
-      }}
+      }},
+
+      {"OR", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() != 2)
+         {
+            return false;
+         }
+
+         vector<Command*> first, second;
+         string& first_expression = args[0].value;
+         string& second_expression = args[1].value;
+         uint32_t pos = 0;
+
+         if(!createCommandSequence(first, scope, first_expression, pos, first_expression.size()))
+         {
+            return false;
+         }
+
+         if(!createCommandSequence(second, scope, second_expression, pos, second_expression.size()))
+         {
+            return false;
+         }
+
+         command = new ORCommand(first, second);
+         return true;
+      }},
    };
 
    LanguageExpression::LanguageExpression()
@@ -380,6 +393,21 @@ namespace dnc
       }
 
       return result;
+   }
+
+   bool LanguageExpression::checkCommands(const vector<Command*>& commands, const string& text, uint32_t& pos, uint32_t last_pos)
+   {
+      uint32_t current_pos = pos;
+      for(uint32_t i = 0; i < commands.size(); ++i)
+      {
+         if(!commands[i]->check(text, current_pos, last_pos))
+         {
+            return false;
+         }
+      }
+
+      pos = current_pos;
+      return true;
    }
 
    bool LanguageExpression::createCommand(Command*& command, const string& expression, uint32_t& pos, uint32_t last_pos)
@@ -1198,21 +1226,6 @@ namespace dnc
       return result;
    }
 
-   bool LanguageExpression::REPCommand::checkCommands(const vector<Command*>& commands, const string& text, uint32_t& pos, uint32_t last_pos) const
-   {
-      uint32_t current_pos = pos;
-      for(uint32_t i = 0; i < commands.size(); ++i)
-      {
-         if(!commands[i]->check(text, current_pos, last_pos))
-         {
-            return false;
-         }
-      }
-
-      pos = current_pos;
-      return true;
-   }
-
    /*
       class LanguageExpression::REPIFCommand
    */
@@ -1324,5 +1337,73 @@ namespace dnc
       result += ")";
 
       return result;
+   }
+
+   /*
+      class LanguageExpression::ORCommand
+   */
+   LanguageExpression::ORCommand::ORCommand()
+   {}
+
+   LanguageExpression::ORCommand::ORCommand(const vector<Command*>& first, const vector<Command*>& second) :
+      first(first),
+      second(second)
+   {}
+
+   LanguageExpression::ORCommand::~ORCommand()
+   {
+      for(auto c : first)
+      {
+         delete c;
+      }
+
+      for(auto c : second)
+      {
+         delete c;
+      }
+   }
+
+   bool LanguageExpression::ORCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      if(checkCommands(first, text, pos, last_pos))
+      {
+         checkCommands(second, text, pos, last_pos);
+         return true;
+      }
+
+      if(checkCommands(second, text, pos, last_pos))
+      {
+         checkCommands(first, text, pos, last_pos);
+         return true;
+      }
+
+      return false;
+   }
+
+   LanguageExpression::Command* LanguageExpression::ORCommand::copy() const
+   {
+      return new ORCommand(first, second);
+   }
+
+   string LanguageExpression::ORCommand::toString() const
+   {
+      string first_str;
+      for(auto c : first)
+      {
+         first_str += c->toString();
+      }
+
+      string second_str;
+      for(auto c : second)
+      {
+         second_str += c->toString();
+      }
+
+      return string("OR(") + first_str + "," + second_str + ")";
    }
 }

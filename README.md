@@ -140,6 +140,15 @@ exp.check("1-2-3-4");   // true
 exp.check("1-2-3-");    // true
 ```
 
+
+### `OR()`
+
+```cpp
+OR::OR(const std::vector<Command*>& first, const std::vecotr<Command*>& second);
+```
+
+Define una condición lógica que significa "`first` o `last` o ambas".
+
 ## Características técnicas
 
 * Las cadenas de texto analizadas deben de estar en formato `UTF-8`.
