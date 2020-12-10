@@ -223,6 +223,22 @@ namespace dnc
          std::vector<Command*> second;
       };
 
+      class OPTCommand : public Command
+      {
+      public:
+         OPTCommand();
+         OPTCommand(const std::vector<Command*>& sequence);
+         ~OPTCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         std::vector<Command*> sequence;
+      };
+
       struct CommandToken
       {
          enum Type

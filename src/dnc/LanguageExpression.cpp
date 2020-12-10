@@ -296,6 +296,25 @@ namespace dnc
          command = new ORCommand(first, second);
          return true;
       }},
+
+      {"OPT", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() != 1)
+         {
+            return false;
+         }
+
+         vector<Command*> sequence;
+         string& expression = args[0].value;
+         uint32_t pos = 0;
+
+         if(!createCommandSequence(sequence, scope, expression, pos, expression.size()))
+         {
+            return false;
+         }
+
+         command = new OPTCommand(sequence);
+         return true;
+      }},
    };
 
    LanguageExpression::LanguageExpression()
@@ -1405,5 +1424,54 @@ namespace dnc
       }
 
       return string("OR(") + first_str + "," + second_str + ")";
+   }
+
+   /*
+      class LanguageExpression::OPTCommand
+   */
+   LanguageExpression::OPTCommand::OPTCommand()
+   {}
+
+   LanguageExpression::OPTCommand::OPTCommand(const vector<Command*>& sequence) :
+      sequence(sequence)
+   {}
+
+   LanguageExpression::OPTCommand::~OPTCommand()
+   {
+      for(auto c : sequence)
+      {
+         delete c;
+      }
+   }
+
+   bool LanguageExpression::OPTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      if(checkCommands(sequence, text, pos, last_pos))
+      {
+         return true;
+      }
+
+      return true;
+   }
+
+   LanguageExpression::Command* LanguageExpression::OPTCommand::copy() const
+   {
+      return new OPTCommand(sequence);
+   }
+
+   string LanguageExpression::OPTCommand::toString() const
+   {
+      string sequence_str;
+      for(auto c : sequence)
+      {
+         sequence_str += c->toString();
+      }
+
+      return string("OPT(") + sequence_str + ")";
    }
 }

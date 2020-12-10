@@ -149,6 +149,23 @@ OR::OR(const std::vector<Command*>& first, const std::vecotr<Command*>& second);
 
 Define una condición lógica que significa "`first` o `last` o ambas".
 
+### `OPT()`
+
+```cpp
+OPT::OPT(const std::vector<Command*>& sequence);
+```
+
+Define una sección opcional, por lo que el comando siempre evaluará como verdadero.
+
+Ejemplo:
+```cpp
+LanguageExpression exp("OPT(NUM(0))NUM(1)");
+
+exp.check("01");  // true
+exp.check("1");   // true
+exp.check("0");   // false 
+```
+
 ## Características técnicas
 
 * Las cadenas de texto analizadas deben de estar en formato `UTF-8`.
