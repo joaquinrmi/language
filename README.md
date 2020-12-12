@@ -183,6 +183,32 @@ exp.check("1");   // true
 exp.check("0");   // false 
 ```
 
+### `EXP()`
+
+```cpp
+EXP::EXP(uint32_t expression_index);
+```
+
+Este comando se reemplaza por una expresión definida con anterioridad. `expression_index` es el índice de la expresión a utilizar dentro del vector de expresiones.
+
+Ejemplo de uso:
+```cpp
+/*
+   La primera expresión representa números de tres dígitos en los cuales
+   el primer dígito está en el rango [1,3] y los siguientes dos dígitos
+   en el rango [0,3].
+*/
+LanguageExpression exp1("NUM(1,3)REP(NUM(0,3),2,2)");
+
+/*
+   Se utiliza el comando EXP() pasándole 0 como argumento, lo que significa
+   que tomará el puntero en la posición 0 del arreglo { &exp1 }.
+*/
+LanguageExpression exp2("EXP(0)UCHAR(\"-\")EXP(0)", 0, { &exp1 });
+
+exp2.check("221-302");     // true
+```
+
 ## Características técnicas
 
 * Las cadenas de texto analizadas deben de estar en formato `UTF-8`.

@@ -27,18 +27,19 @@ namespace dnc
       struct CommandScope
       {
          std::function<bool(Command*&, const std::string&, uint32_t&, uint32_t)> createCommand;
-         std::vector<LanguageExpression*> expressions;
+         std::vector<const LanguageExpression*> expressions;
       };
 
       LanguageExpression();
-      LanguageExpression(const std::string& expression);
+      LanguageExpression(const std::string& text, const std::vector<const LanguageExpression*>& expressions = std::vector<const LanguageExpression*>());
       virtual ~LanguageExpression();
 
-      bool create(const std::string& expression, uint32_t init_pos = 0);
-      bool create(const std::string& expression, uint32_t init_pos, uint32_t last_pos);
+      bool create(const std::string& text, uint32_t init_pos = 0, const std::vector<const LanguageExpression*>& expressions = std::vector<const LanguageExpression*>());
+      bool create(const std::string& text, uint32_t init_pos, uint32_t last_pos, const std::vector<const LanguageExpression*>& expressions = std::vector<const LanguageExpression*>());
 
-      bool check(const std::string& text, uint32_t init_pos = 0) const;
-      bool check(const std::string& text, uint32_t init_pos, uint32_t last_pos) const;
+      bool check(const std::string& text, uint32_t init_pos = 0, bool ignore_rest = true) const;
+      bool check(const std::string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest = true) const;
+      bool checkAndAdvance(const std::string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const;
 
       void clear();
 
@@ -256,6 +257,22 @@ namespace dnc
          std::vector<Command*> sequence;
       };
 
+      class EXPCommand : public Command
+      {
+      public:
+         EXPCommand();
+         EXPCommand(const LanguageExpression* expression);
+         ~EXPCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         const LanguageExpression* expression;
+      };
+
       struct CommandToken
       {
          enum Type
@@ -281,7 +298,7 @@ namespace dnc
 
       static bool checkCommands(const std::vector<Command*>& commands, const std::string& text, uint32_t& pos, uint32_t last_pos);
 
-      bool createCommand(Command*& command, const std::string& expression, uint32_t& pos, uint32_t last_pos);
+      bool createCommand(Command*& command, const std::string& text, uint32_t& pos, uint32_t last_pos);
       bool getCommandArgs(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);
       bool getStringToken(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);
       bool getCommandSequenceToken(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);

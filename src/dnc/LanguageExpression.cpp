@@ -340,6 +340,23 @@ namespace dnc
          command = new OPTCommand(sequence);
          return true;
       }},
+
+      {"EXP", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() != 1)
+         {
+            return false;
+         }
+
+         uint32_t exp_pos = atof(args[0].value.c_str());
+
+         if(exp_pos >= scope.expressions.size())
+         {
+            return false;
+         }
+
+         command = new EXPCommand(scope.expressions[exp_pos]);
+         return true;
+      }},
    };
 
    LanguageExpression::LanguageExpression()
@@ -350,13 +367,13 @@ namespace dnc
       };
    }
 
-   LanguageExpression::LanguageExpression(const string& expression)
+   LanguageExpression::LanguageExpression(const string& expression, const vector<const LanguageExpression*>& expressions)
    {
       command_scope.createCommand = [this](Command*& a, const std::string& b, uint32_t& c, uint32_t d) -> bool
       {
          return this->createCommand(a, b, c, d);
       };
-      create(expression, 0);
+      create(expression, 0, expressions);
    }
 
    LanguageExpression::~LanguageExpression()
@@ -364,16 +381,18 @@ namespace dnc
       clear();
    }
 
-   bool LanguageExpression::create(const string& expression, uint32_t init_pos)
+   bool LanguageExpression::create(const string& text, uint32_t init_pos, const vector<const LanguageExpression*>& expressions)
    {
-      return create(expression, init_pos, expression.size());
+      return create(text, init_pos, text.size(), expressions);
    }
 
-   bool LanguageExpression::create(const string& expression, uint32_t init_pos, uint32_t last_pos)
+   bool LanguageExpression::create(const string& text, uint32_t init_pos, uint32_t last_pos, const vector<const LanguageExpression*>& expressions)
    {
-      if(last_pos > expression.size())
+      command_scope.expressions = expressions;
+
+      if(last_pos > text.size())
       {
-         last_pos = expression.size();
+         last_pos = text.size();
       }
 
       uint32_t pos = init_pos;
@@ -382,7 +401,7 @@ namespace dnc
       while(pos < last_pos)
       {
          Command* command;
-         if(!createCommand(command, expression, pos, last_pos))
+         if(!createCommand(command, text, pos, last_pos))
          {
             for(auto c : current_command_sequence)
             {
@@ -401,12 +420,17 @@ namespace dnc
       return true;
    }
 
-   bool LanguageExpression::check(const string& text, uint32_t init_pos) const
+   bool LanguageExpression::check(const string& text, uint32_t init_pos, bool ignore_rest) const
    {
-      return check(text, init_pos, text.size());
+      return checkAndAdvance(text, init_pos, text.size(), ignore_rest);
    }
 
-   bool LanguageExpression::check(const string& text, uint32_t init_pos, uint32_t last_pos) const
+   bool LanguageExpression::check(const string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest) const
+   {
+      return checkAndAdvance(text, init_pos, last_pos, ignore_rest);
+   }
+
+   bool LanguageExpression::checkAndAdvance(const string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const
    {
       for(auto command : command_sequence)
       {
@@ -416,7 +440,12 @@ namespace dnc
          }
       }
 
-      return true;
+      if(ignore_rest)
+      {
+         return true;
+      }
+
+      return init_pos >= text.size();
    }
 
    void LanguageExpression::clear()
@@ -454,24 +483,24 @@ namespace dnc
       return true;
    }
 
-   bool LanguageExpression::createCommand(Command*& command, const string& expression, uint32_t& pos, uint32_t last_pos)
+   bool LanguageExpression::createCommand(Command*& command, const string& text, uint32_t& pos, uint32_t last_pos)
    {
       uint32_t command_begin = pos;
 
-      if(expression[pos] == '-' || expression[pos] == '_')
+      if(text[pos] == '-' || text[pos] == '_')
       {
          CommandArgs args;
-         return COMMAND_CREATORS.at(expression.substr(pos++, 1))(command, args, command_scope);
+         return COMMAND_CREATORS.at(text.substr(pos++, 1))(command, args, command_scope);
       }
 
       while(true)
       {
-         if(!(pos < last_pos) || !(pos < expression.size()))
+         if(!(pos < last_pos) || !(pos < text.size()))
          {
             return false;
          }
 
-         if(expression[pos] == '(')
+         if(text[pos] == '(')
          {
             break;
          }
@@ -479,7 +508,7 @@ namespace dnc
          ++pos;
       }
 
-      string command_name = expression.substr(command_begin, pos - command_begin);
+      string command_name = text.substr(command_begin, pos - command_begin);
       ++pos;
 
       auto found = COMMAND_CREATORS.find(command_name);
@@ -489,7 +518,7 @@ namespace dnc
       }
 
       CommandArgs args;
-      if(!getCommandArgs(args, expression, pos, last_pos))
+      if(!getCommandArgs(args, text, pos, last_pos))
       {
          return false;
       }
@@ -1564,5 +1593,38 @@ namespace dnc
       }
 
       return string("OPT(") + sequence_str + ")";
+   }
+
+   /*
+      class LanguageExpression::EXPCommand
+   */
+   LanguageExpression::EXPCommand::EXPCommand()
+   {}
+
+   LanguageExpression::EXPCommand::EXPCommand(const LanguageExpression* expression) :
+      expression(expression)
+   {}
+
+   LanguageExpression::EXPCommand::~EXPCommand()
+   {}
+
+   bool LanguageExpression::EXPCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      return expression->checkAndAdvance(text, pos, last_pos, true);
+   }
+
+   LanguageExpression::Command* LanguageExpression::EXPCommand::copy() const
+   {
+      return new EXPCommand(expression);
+   }
+
+   string LanguageExpression::EXPCommand::toString() const
+   {
+      return expression->toString();
    }
 }
