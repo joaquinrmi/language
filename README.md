@@ -71,10 +71,10 @@ Ejemplo:
 ```cpp
 LanguageExpression exp("UCHAR(\"a\")_UCHAR(\"b\")");
 
-exp.check("a b");    // true
-exp.check("a   b");  // true
-exp.check("a\nb");   // true
-exp.check("ab");     // false
+exp.check("a b").ok();    // true
+exp.check("a   b").ok();  // true
+exp.check("a\nb").ok();   // true
+exp.check("ab").ok();     // false
 ```
 
 ### `-`
@@ -85,10 +85,10 @@ Ejemplo:
 ```cpp
 LanguageExpression exp("STR(\"a;\")_STR(\"var\")");
 
-exp.check("a; var");    // true
-exp.check("a;   var");  // true
-exp.check("a;\nvar");   // true
-exp.check("a;var");     // true
+exp.check("a; var").ok();    // true
+exp.check("a;   var").ok();  // true
+exp.check("a;\nvar").ok();   // true
+exp.check("a;var").ok();     // true
 ```
 
 ### `REP()`
@@ -107,8 +107,8 @@ Ejemplo de repetición con números:
 */
 LanguageExpression exp("REP(NUM(0,1),4,8)");
 
-exp.check("10001");    // true
-exp.check("1021");     // false
+exp.check("10001").ok();    // true
+exp.check("1021").ok();     // false
 ```
 
 ### `REPIF()`
@@ -127,8 +127,8 @@ Ejemplo de repetición condicional con números:
 */
 LanguageExpression exp("REPIF(NUM(),UCHAR(\"-\"))");
 
-exp.check("1-2-3-4");   // true
-exp.check("1-2-3-");    // false
+exp.check("1-2-3-4").ok();   // true
+exp.check("1-2-3-").ok();    // false
 
 /*
    Para que la segunda cadena se evalue como verdadera,
@@ -136,8 +136,8 @@ exp.check("1-2-3-");    // false
 */
 LanguageExpression exp("REPIF(NUM(),UCHAR(\"-\"),true)");
 
-exp.check("1-2-3-4");   // true
-exp.check("1-2-3-");    // true
+exp.check("1-2-3-4").ok();   // true
+exp.check("1-2-3-").ok();    // true
 ```
 
 
@@ -161,9 +161,9 @@ Ejemplo:
 ```cpp
 LanguageExpression exp("XOR(NUM(0),NUM(1))NUM(2)");
 
-exp.check("02");     // true
-exp.check("12");     // true
-exp.check("012");    // false
+exp.check("02").ok();     // true
+exp.check("12").ok();     // true
+exp.check("012").ok();    // false
 ```
 
 ### `OPT()`
@@ -178,9 +178,9 @@ Ejemplo:
 ```cpp
 LanguageExpression exp("OPT(NUM(0))NUM(1)");
 
-exp.check("01");  // true
-exp.check("1");   // true
-exp.check("0");   // false 
+exp.check("01").ok();  // true
+exp.check("1").ok();   // true
+exp.check("0").ok();   // false 
 ```
 
 ### `EXP()`
@@ -206,7 +206,7 @@ LanguageExpression exp1("NUM(1,3)REP(NUM(0,3),2,2)");
 */
 LanguageExpression exp2("EXP(0)UCHAR(\"-\")EXP(0)", 0, { &exp1 });
 
-exp2.check("221-302");     // true
+exp2.check("221-302").ok();     // true
 ```
 
 ## Características técnicas
