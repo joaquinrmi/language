@@ -14,7 +14,7 @@ namespace dnc
    {
       while(pos < text.size())
       {
-		 LanguageExpression::Command* current_command;
+       LanguageExpression::Command* current_command;
          if(!scope.createCommand(current_command, text, pos, last_pos))
          {
             for(auto c : sequence)
@@ -27,8 +27,8 @@ namespace dnc
 
          sequence.push_back(current_command);
       }
-	  
-	  return true;
+     
+     return true;
    }
 
    const map<string, LanguageExpression::CommandCreator> LanguageExpression::COMMAND_CREATORS = {
@@ -433,38 +433,25 @@ namespace dnc
       return true;
    }
 
-   ParseProduct LanguageExpression::check(const string& text, uint32_t init_pos, bool ignore_rest) const
+   bool LanguageExpression::check(const string& text, uint32_t init_pos, bool ignore_rest) const
    {
       return checkAndAdvance(text, init_pos, text.size(), ignore_rest);
    }
 
-   ParseProduct LanguageExpression::check(const string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest) const
+   bool LanguageExpression::check(const string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest) const
    {
       return checkAndAdvance(text, init_pos, last_pos, ignore_rest);
    }
 
-   ParseProduct LanguageExpression::checkAndAdvance(const string& text, uint32_t& pos, uint32_t last_pos, bool ignore_rest) const
+   bool LanguageExpression::checkAndAdvance(const string& text, uint32_t& pos, uint32_t last_pos, bool ignore_rest) const
    {
       uint32_t init_pos = pos;
-      vector<void*> data;
 
       for(auto command : command_sequence)
       {
-         auto product = command->check(text, pos, last_pos);
-         if(!product.ok())
+         if(!command->check(text, pos, last_pos))
          {
-            /*
-               TODO: habría que buscar una forma de abortar la operación y elimiar todos los produtos que hayan sido creados.
-            */
-            return ParseProduct();
-         }
-
-         if(product.hasData())
-         {
-            for(auto element : product.data)
-            {
-               data.push_back(element);
-            }
+            return false;
          }
       }
 
@@ -472,13 +459,12 @@ namespace dnc
       {
          if(has_factory_function)
          {
-            return factory_function(ParseProduct(init_pos, pos, data));
+            factory_function(ParseProduct(init_pos, pos));
          }
-
-         return ParseProduct(init_pos, pos, data);
+         return true;
       }
 
-      return ParseProduct();;
+      return false;
    }
 
    void LanguageExpression::clear()
@@ -501,28 +487,19 @@ namespace dnc
       return result;
    }
 
-   ParseProduct LanguageExpression::checkCommands(const vector<Command*>& commands, const string& text, uint32_t& pos, uint32_t last_pos)
+   bool LanguageExpression::checkCommands(const vector<Command*>& commands, const string& text, uint32_t& pos, uint32_t last_pos)
    {
-      vector<void*> data;
-      uint32_t init_pos = pos;
-
       uint32_t current_pos = pos;
       for(uint32_t i = 0; i < commands.size(); ++i)
       {
-         auto product = commands[i]->check(text, current_pos, last_pos);
-         if(!product.ok())
+         if(!commands[i]->check(text, current_pos, last_pos))
          {
-            return ParseProduct();
-         }
-
-         for(auto p : product.data)
-         {
-            data.push_back(p);
+            return false;
          }
       }
 
       pos = current_pos;
-      return ParseProduct(init_pos, pos, data);
+      return true;
    }
 
    bool LanguageExpression::createCommand(Command*& command, const string& text, uint32_t& pos, uint32_t last_pos)
@@ -810,27 +787,27 @@ namespace dnc
    LanguageExpression::UCHARCommand::~UCHARCommand()
    {}
 
-   ParseProduct LanguageExpression::UCHARCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::UCHARCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
       int char_count;
       if(!UTF8Analyzer::countNextChar(text, char_count, pos))
       {
-         return ParseProduct();
+         return false;
       }
 
       if(text.substr(pos, char_count) == unique_char)
       {
          pos += char_count;
-         return ParseProduct(pos - 1, pos);
+         return true;
       }
       pos += char_count;
 
-      return ParseProduct();
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::UCHARCommand::copy() const
@@ -852,26 +829,26 @@ namespace dnc
    LanguageExpression::CHARCommand::~CHARCommand()
    {}
 
-   ParseProduct LanguageExpression::CHARCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::CHARCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
       int char_count;
       if(!UTF8Analyzer::countNextChar(text, char_count, pos))
       {
-         return ParseProduct();
+         return false;
       }
       pos += char_count;
 
       if(char_count == 0)
       {
-         return ParseProduct();
+         return false;
       }
 
-      return ParseProduct(pos - 1, pos);
+      return true;
    }
 
    LanguageExpression::Command* LanguageExpression::CHARCommand::copy() const
@@ -901,26 +878,26 @@ namespace dnc
    LanguageExpression::STRCommand::~STRCommand()
    {}
 
-   ParseProduct LanguageExpression::STRCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::STRCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
       uint32_t final_pos = pos + value.size();
       if(final_pos > text.size() || final_pos > last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
       if(text.substr(pos, value.size()) != value)
       {
-         return ParseProduct();
+         return false;
       }
       pos += value.size();
 
-      return ParseProduct(pos - value.size(), pos);
+      return true;
    }
 
    LanguageExpression::Command* LanguageExpression::STRCommand::copy() const
@@ -952,22 +929,22 @@ namespace dnc
    LanguageExpression::NUMCommand::~NUMCommand()
    {}
 
-   ParseProduct LanguageExpression::NUMCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::NUMCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
       TextToken token;
       if(!UTF8Tokenizator::getToken(text, pos, token).ok())
       {
-         return ParseProduct();
+         return false;
       }
 
       if(token.type != TextToken::NUMBER)
       {
-         return ParseProduct();
+         return false;
       }
 
       string str_num = token.value.substr(0, 1);
@@ -977,10 +954,10 @@ namespace dnc
 
       if(num >= min_num && num <= max_num)
       {
-         return ParseProduct(pos - 1, pos);
+         return true;
       }
 
-      return ParseProduct();
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::NUMCommand::copy() const
@@ -994,8 +971,8 @@ namespace dnc
       {
          return string("NUM(") + dnc::toString(min_num) + ")";
       }
-	  
-	  return string("NUM(") + dnc::toString(min_num) + "," + dnc::toString(max_num) + ")";
+     
+     return string("NUM(") + dnc::toString(min_num) + "," + dnc::toString(max_num) + ")";
    }
 
    /*
@@ -1020,39 +997,39 @@ namespace dnc
    LanguageExpression::NUMTCommand::~NUMTCommand()
    {}
 
-   ParseProduct LanguageExpression::NUMTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::NUMTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
       TextToken token;
       if(!UTF8Tokenizator::getToken(text, pos, token).ok())
       {
-         return ParseProduct();
+         return false;
       }
 
       if(token.type != TextToken::NUMBER)
       {
-         return ParseProduct();
+         return false;
       }
 
       pos += token.char_count;
 
       if(!use_range)
       {
-         return ParseProduct(pos - token.char_count, pos);
+         return true;
       }
 
       double num = atof(token.value.c_str());
 
       if(num >= min_num && num <= max_num)
       {
-         return ParseProduct(pos - token.char_count, pos);
+         return true;
       }
 
-      return ParseProduct();
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::NUMTCommand::copy() const
@@ -1102,22 +1079,22 @@ namespace dnc
    LanguageExpression::INUMTCommand::~INUMTCommand()
    {}
 
-   ParseProduct LanguageExpression::INUMTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::INUMTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
       TextToken token;
       if(!UTF8Tokenizator::getToken(text, pos, token).ok())
       {
-         return ParseProduct();
+         return false;
       }
 
       if(token.type != TextToken::NUMBER)
       {
-         return ParseProduct();
+         return false;
       }
 
       pos += token.char_count;
@@ -1125,20 +1102,20 @@ namespace dnc
       double num = atof(token.value.c_str());
       if((num / uint64_t(num)) - 1 > 0)
       {
-         return ParseProduct();
+         return false;
       }
 
       if(!use_range)
       {
-         return ParseProduct(pos - token.char_count, pos);
+         return true;
       }
 
       if(num >= min_num && num <= max_num)
       {
-         return ParseProduct(pos - token.char_count, pos);
+         return true;
       }
 
-      return ParseProduct();
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::INUMTCommand::copy() const
@@ -1175,15 +1152,14 @@ namespace dnc
    LanguageExpression::BLANKCommand::~BLANKCommand()
    {}
 
-   ParseProduct LanguageExpression::BLANKCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::BLANKCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
       bool found = false;
-      uint32_t init_pos = pos;
 
       while(true)
       {
@@ -1202,12 +1178,7 @@ namespace dnc
          found = true;
       }
 
-      if(found)
-      {
-         return ParseProduct(init_pos, pos);
-      }
-
-      return ParseProduct();
+      return found;
    }
 
    LanguageExpression::Command* LanguageExpression::BLANKCommand::copy() const
@@ -1229,14 +1200,12 @@ namespace dnc
    LanguageExpression::OPTBLANKCommand::~OPTBLANKCommand()
    {}
 
-   ParseProduct LanguageExpression::OPTBLANKCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::OPTBLANKCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
-
-      uint32_t init_pos = pos;
 
       while(true)
       {
@@ -1254,7 +1223,7 @@ namespace dnc
          pos += token.value.size();
       }
 
-      return ParseProduct(init_pos, pos);
+      return true;
    }
 
    LanguageExpression::Command* LanguageExpression::OPTBLANKCommand::copy() const
@@ -1287,28 +1256,20 @@ namespace dnc
       }
    }
 
-   ParseProduct LanguageExpression::REPCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::REPCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
-
-      vector<void*> data;
 
       uint32_t repeated = 0;
       uint32_t current_pos = pos;
-      uint32_t init_pos = pos;
       while(true)
       {
-         auto product = checkCommands(commands, text, current_pos, last_pos);
-         if(!product.ok())
+         if(!checkCommands(commands, text, current_pos, last_pos))
          {
             break;
-         }
-         for(auto p : product.data)
-         {
-            data.push_back(p);
          }
 
          repeated += 1;
@@ -1318,10 +1279,10 @@ namespace dnc
 
       if(repeated >= min && repeated <= max)
       {
-         return ParseProduct(init_pos, pos, data);
+         return true;
       }
 
-      return ParseProduct();
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::REPCommand::copy() const
@@ -1377,47 +1338,33 @@ namespace dnc
       }
    }
 
-   ParseProduct LanguageExpression::REPIFCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::REPIFCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
-
-      vector<void*> data;
 
       uint32_t repeated = 0;
       uint32_t current_pos = pos;
-      uint32_t init_pos = pos;
       bool condition_found = false;
       while(true)
       {
-         auto product = checkCommands(commands, text, current_pos, last_pos);
-         if(!product.ok())
+         if(!checkCommands(commands, text, current_pos, last_pos))
          {
             if(condition_found && !ignore)
             {
-               return ParseProduct();
+               return false;
             }
             break;
-         }
-         for(auto p : product.data)
-         {
-            data.push_back(p);
          }
 
          repeated += 1;
 
-         product = checkCommands(condition, text, current_pos, last_pos);
-         if(!product.ok())
+         if(!checkCommands(condition, text, current_pos, last_pos))
          {
             break;
          }
-         for(auto p : product.data)
-         {
-            data.push_back(p);
-         }
-
          condition_found = true;
       }
 
@@ -1425,10 +1372,10 @@ namespace dnc
 
       if(repeated >= min && repeated <= max)
       {
-         return ParseProduct(init_pos, pos, data);
+         return true;
       }
 
-      return ParseProduct();
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::REPIFCommand::copy() const
@@ -1508,57 +1455,26 @@ namespace dnc
       }
    }
 
-   ParseProduct LanguageExpression::ORCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::ORCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
-      vector<void*> data;
-      uint32_t init_pos = pos;
-
-      auto product = checkCommands(first, text, pos, last_pos);
-      if(product.ok())
+      if(checkCommands(first, text, pos, last_pos))
       {
-         for(auto p : product.data)
-         {
-            data.push_back(p);
-         }
-         auto product2 = checkCommands(second, text, pos, last_pos);
-         if(product2.ok())
-         {
-            for(auto p : product2.data)
-            {
-               data.push_back(p);
-            }
-         }
-      }
-      else
-      {
-         product = checkCommands(second, text, pos, last_pos);
-         if(product.ok())
-         {
-            for(auto p : product.data)
-            {
-               data.push_back(p);
-            }
-            auto product2 = checkCommands(first, text, pos, last_pos);
-            if(product2.ok())
-            {
-               for(auto p : product2.data)
-               {
-                  data.push_back(p);
-               }
-            }
-         }
-         else
-         {
-            return ParseProduct();
-         }
+         checkCommands(second, text, pos, last_pos);
+         return true;
       }
 
-      return ParseProduct(init_pos, pos, data);
+      if(checkCommands(second, text, pos, last_pos))
+      {
+         checkCommands(first, text, pos, last_pos);
+         return true;
+      }
+
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::ORCommand::copy() const
@@ -1607,37 +1523,24 @@ namespace dnc
       }
    }
 
-   ParseProduct LanguageExpression::XORCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::XORCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
-      vector<void*> data;
-      uint32_t init_pos = pos;
-
-      auto product = checkCommands(first, text, pos, last_pos);
-      if(product.ok())
+      if(checkCommands(first, text, pos, last_pos))
       {
-         for(auto p : product.data)
-         {
-            data.push_back(p);
-         }
-         return ParseProduct(init_pos, pos, data);
+         return true;
       }
 
-      product = checkCommands(second, text, pos, last_pos);
-      if(product.ok())
+      if(checkCommands(second, text, pos, last_pos))
       {
-         for(auto p : product.data)
-         {
-            data.push_back(p);
-         }
-         return ParseProduct(init_pos, pos, data);
+         return true;
       }
 
-      return ParseProduct();
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::XORCommand::copy() const
@@ -1680,22 +1583,19 @@ namespace dnc
       }
    }
 
-   ParseProduct LanguageExpression::OPTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::OPTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
-      uint32_t init_pos = pos;
-
-      auto product = checkCommands(sequence, text, pos, last_pos);
-      if(product.ok())
+      if(checkCommands(sequence, text, pos, last_pos))
       {
-         return ParseProduct(init_pos, pos, product.data);
+         return true;
       }
 
-      return ParseProduct(init_pos, pos);
+      return true;
    }
 
    LanguageExpression::Command* LanguageExpression::OPTCommand::copy() const
@@ -1727,11 +1627,11 @@ namespace dnc
    LanguageExpression::EXPCommand::~EXPCommand()
    {}
 
-   ParseProduct LanguageExpression::EXPCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   bool LanguageExpression::EXPCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
       {
-         return ParseProduct();
+         return false;
       }
 
       return expression->checkAndAdvance(text, pos, last_pos, true);

@@ -19,7 +19,7 @@ namespace dnc
          Command();
          virtual ~Command();
 
-         virtual ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const = 0;
+         virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const = 0;
 
          virtual Command* copy() const = 0;
          virtual std::string toString() const = 0;
@@ -31,7 +31,7 @@ namespace dnc
          std::vector<const LanguageExpression*> expressions;
       };
 
-      typedef std::function<ParseProduct(ParseProduct)> FactoryFunction;
+      typedef std::function<void(ParseProduct)> FactoryFunction;
 
       LanguageExpression();
       LanguageExpression(const std::string& text, const std::vector<const LanguageExpression*>& expressions = std::vector<const LanguageExpression*>());
@@ -43,9 +43,9 @@ namespace dnc
       bool create(const std::string& text, uint32_t init_pos = 0, const std::vector<const LanguageExpression*>& expressions = std::vector<const LanguageExpression*>());
       bool create(const std::string& text, uint32_t init_pos, uint32_t last_pos, const std::vector<const LanguageExpression*>& expressions = std::vector<const LanguageExpression*>());
 
-      ParseProduct check(const std::string& text, uint32_t init_pos = 0, bool ignore_rest = true) const;
-      ParseProduct check(const std::string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest = true) const;
-      ParseProduct checkAndAdvance(const std::string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const;
+      bool check(const std::string& text, uint32_t init_pos = 0, bool ignore_rest = true) const;
+      bool check(const std::string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest = true) const;
+      bool checkAndAdvance(const std::string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const;
 
       void clear();
 
@@ -60,7 +60,7 @@ namespace dnc
          UCHARCommand(std::string&& unique_char);
          ~UCHARCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -75,7 +75,7 @@ namespace dnc
          CHARCommand();
          ~CHARCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -89,7 +89,7 @@ namespace dnc
          STRCommand(std::string&& str);
          ~STRCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -106,7 +106,7 @@ namespace dnc
          NUMCommand(uint16_t min_num, uint16_t max_num);
          ~NUMCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -124,7 +124,7 @@ namespace dnc
          NUMTCommand(double min_num, double max_num);
          ~NUMTCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -143,7 +143,7 @@ namespace dnc
          INUMTCommand(uint64_t min_num, uint64_t max_num);
          ~INUMTCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -160,7 +160,7 @@ namespace dnc
          BLANKCommand();
          ~BLANKCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -172,7 +172,7 @@ namespace dnc
          OPTBLANKCommand();
          ~OPTBLANKCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -185,7 +185,7 @@ namespace dnc
          REPCommand(const std::vector<Command*>& commands, uint32_t min = 1, uint32_t max = -1);
          virtual ~REPCommand();
 
-         virtual ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          virtual Command* copy() const override;
          virtual std::string toString() const override;
@@ -203,7 +203,7 @@ namespace dnc
          REPIFCommand(const std::vector<Command*>& sequence, const std::vector<Command*>& condition, bool ignore = false, uint32_t min = 1, uint32_t max = -1);
          ~REPIFCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -220,7 +220,7 @@ namespace dnc
          ORCommand(const std::vector<Command*>& first, const std::vector<Command*>& second);
          ~ORCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -237,7 +237,7 @@ namespace dnc
          XORCommand(const std::vector<Command*>& first, const std::vector<Command*>& second);
          ~XORCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -254,7 +254,7 @@ namespace dnc
          OPTCommand(const std::vector<Command*>& sequence);
          ~OPTCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -270,7 +270,7 @@ namespace dnc
          EXPCommand(const LanguageExpression* expression);
          ~EXPCommand();
 
-         ParseProduct check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -304,7 +304,7 @@ namespace dnc
       bool has_factory_function;
       FactoryFunction factory_function;
 
-      static ParseProduct checkCommands(const std::vector<Command*>& commands, const std::string& text, uint32_t& pos, uint32_t last_pos);
+      static bool checkCommands(const std::vector<Command*>& commands, const std::string& text, uint32_t& pos, uint32_t last_pos);
 
       bool createCommand(Command*& command, const std::string& text, uint32_t& pos, uint32_t last_pos);
       bool getCommandArgs(CommandArgs& args, const std::string& expression, uint32_t& pos, uint32_t last_pos);
