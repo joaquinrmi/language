@@ -375,6 +375,36 @@ namespace dnc
          command = new RANGECommand(min, max);
          return true;
       }},
+
+      {"L", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() != 0)
+         {
+            return false;
+         }
+
+         command = new LETTERCommand();
+         return true;
+      }},
+
+      {"LU", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() != 0)
+         {
+            return false;
+         }
+
+         command = new UPPERLETTERCommand();
+         return true;
+      }},
+
+      {"LL", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() != 0)
+         {
+            return false;
+         }
+
+         command = new LOWERLETTERCommand();
+         return true;
+      }},
    };
 
    LanguageExpression::LanguageExpression() :
@@ -1717,4 +1747,76 @@ namespace dnc
    {
       return string("R(") + dnc::toString(min) + "," + dnc::toString(max) + ")";
    }
+
+   /*
+      class LanguageExpression::LETTERCommand
+   */
+   LanguageExpression::LETTERCommand::LETTERCommand() :
+      min0(65),
+      max0(90),
+      min1(97),
+      max1(122)
+   {}
+
+   LanguageExpression::LETTERCommand::~LETTERCommand()
+   {}
+
+   bool LanguageExpression::LETTERCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      uint32_t char_code;
+      if(!UTF8Analyzer::getCharCode(text, pos, char_code))
+      {
+         return false;
+      }
+
+      if(char_code < min0 || char_code > max1 || (char_code > max0 && char_code < min1))
+      {
+         return false;
+      }
+
+      int char_count;
+      if(!UTF8Analyzer::countNextChar(text, char_count, pos))
+      {
+         return false;
+      }
+
+      pos += char_count;
+
+      return true;
+   }
+
+   LanguageExpression::Command* LanguageExpression::LETTERCommand::copy() const
+   {
+      return new LETTERCommand();
+   }
+
+   string LanguageExpression::LETTERCommand::toString() const
+   {
+      return "L()";
+   }
+
+   /*
+      class LanguageExpression::UPPERLETTERCommand
+   */
+   LanguageExpression::UPPERLETTERCommand::UPPERLETTERCommand() :
+      RANGECommand(65, 90)
+   {}
+
+   LanguageExpression::UPPERLETTERCommand::~UPPERLETTERCommand()
+   {}
+
+   /*
+      class LanguageExpression::LOWERLETTERCommand
+   */
+   LanguageExpression::LOWERLETTERCommand::LOWERLETTERCommand() :
+      RANGECommand(97, 122)
+   {}
+
+   LanguageExpression::LOWERLETTERCommand::~LOWERLETTERCommand()
+   {}
 }

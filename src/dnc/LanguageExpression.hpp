@@ -284,7 +284,7 @@ namespace dnc
       public:
          RANGECommand();
          RANGECommand(uint32_t min, uint32_t max);
-         ~RANGECommand();
+         virtual ~RANGECommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
@@ -294,6 +294,36 @@ namespace dnc
       private:
          uint32_t min;
          uint32_t max;
+      };
+
+      class LETTERCommand : public Command
+      {
+      public:
+         LETTERCommand();
+         ~LETTERCommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         const uint32_t min0, max0;
+         const uint16_t min1, max1;
+      };
+
+      class UPPERLETTERCommand : public RANGECommand
+      {
+      public:
+         UPPERLETTERCommand();
+         ~UPPERLETTERCommand();
+      };
+
+      class LOWERLETTERCommand : public RANGECommand
+      {
+      public:
+         LOWERLETTERCommand();
+         ~LOWERLETTERCommand();
       };
 
       struct CommandToken

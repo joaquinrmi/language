@@ -119,6 +119,30 @@ INUMT::INUMT(double min_num, double max_num);
 
 Define un número entero con cualquier cantidad de caracteres.
 
+### `L()`
+
+```cpp
+L::L();
+```
+
+Define una letra del abecedario inglés que puede ser tanto minúscula como mayúscula.
+
+### `LL()`
+
+```cpp
+LL::LL();
+```
+
+Funciona igual que `L()`, pero solo define letras minúsculas, excluyendo a las mayúsculas.
+
+### `LU()`
+
+```cpp
+LU::LU();
+```
+
+Funciona igual que `L()`, pero solo define letras mayúsculas, excluyendo a las minúsculas.
+
 ### `NUM()`
 
 ```cpp
