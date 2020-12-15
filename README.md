@@ -40,6 +40,42 @@ exp.check("s4ludos");   // false, contiene un número
 exp.check("diyxjre");   // true
 ```
 
+### Callback de validación
+
+Si una expresión se valida como verdadera en un objeto `LanguageExpression`, entonces el objeto hará una llamada a una función `FactoryFunction`, la cual podrá ser definida con el método `LanguageExpression::setFactoryFunction()`.
+
+La definición de `FactoryFunction` se encuentra dentro de `LanguageExpression`.
+```cpp
+class LanguageExpression
+{
+public:
+   typedef std::function<void(ParseProduct)> FactoryFunction;
+};
+```
+
+El objeto de tipo `ParseProduct` recibido como parámetro posee los métodos `ParseProduct::begin()` y `ParseProduct::end()` que indican la posición inicial y final de la sección de texto validada, respecticamente.
+
+Ejemplo de uso de la función *callbak*:
+```cpp
+LanguageExpression exp("UCHAR(\"$\")REP(L())");
+
+exp.setFactoryFunction([](ParseProduct product) {
+   cout << "Validado!" << endl;
+});
+
+if(exp.check("$holaMundo"))
+{
+   cout << "veradadero" << endl;
+}
+else cout << "false" << endl;
+
+/*
+   La salida tendrá una forma similar a la siguiente:
+*/
+// >> Validado!
+// >> verdadero
+```
+
 ## Comandos
 
 Para definir una **expresión** se utilizan **comandos**. Los comandos son los pequeños objetos que se encargan de validar una parte específica de la cadena de texto.
