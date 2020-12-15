@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <map>
+#include <unordered_set>
 #include <string>
 #include <functional>
 
@@ -324,6 +325,25 @@ namespace dnc
       public:
          LOWERLETTERCommand();
          ~LOWERLETTERCommand();
+      };
+
+      class SETCommand : public Command
+      {
+      public:
+         SETCommand();
+         SETCommand(const std::string& chars);
+         ~SETCommand();
+
+         void addElement(uint32_t min, uint32_t max);
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+      	std::string chars;
+         std::unordered_set<std::string> value;
       };
 
       struct CommandToken

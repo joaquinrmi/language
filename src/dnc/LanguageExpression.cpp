@@ -405,6 +405,16 @@ namespace dnc
          command = new LOWERLETTERCommand();
          return true;
       }},
+
+      {"S", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() != 1)
+         {
+            return false;
+         }
+
+         command = new SETCommand(args[0].value);
+         return true;
+      }},
    };
 
    LanguageExpression::LanguageExpression() :
@@ -1819,4 +1829,59 @@ namespace dnc
 
    LanguageExpression::LOWERLETTERCommand::~LOWERLETTERCommand()
    {}
+
+   /*
+      class LanguageExpression::SETCommand
+   */
+   LanguageExpression::SETCommand::SETCommand()
+   {}
+
+   LanguageExpression::SETCommand::SETCommand(const string& chars) :
+      chars(chars)
+   {
+      uint32_t pos = 0;
+      int char_count = 0;
+
+      while(pos < chars.size())
+      {
+         UTF8Analyzer::countNextChar(chars, char_count, pos);
+         value.insert(chars.substr(pos, char_count));
+         pos += char_count;
+      }
+   }
+
+   LanguageExpression::SETCommand::~SETCommand()
+   {}
+
+   bool LanguageExpression::SETCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      int char_count = 0;
+      if(!UTF8Analyzer::countNextChar(text, char_count, pos))
+      {
+         return false;
+      }
+
+      if(value.find(text.substr(pos, char_count)) == value.end())
+      {
+         return false;
+      }
+      pos += char_count;
+
+      return true;
+   }
+
+   LanguageExpression::Command* LanguageExpression::SETCommand::copy() const
+   {
+      return new SETCommand(chars);
+   }
+
+   string LanguageExpression::SETCommand::toString() const
+   {
+      return string("S(\"") + chars + "\")";
+   }
 }

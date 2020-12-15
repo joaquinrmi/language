@@ -249,6 +249,23 @@ exp.check("1-2-3-4");   // true
 exp.check("1-2-3-");    // true
 ```
 
+### `S()`
+
+```cpp
+S::S(const std::string& char_set);
+```
+
+Define un conjunto de caracteres para validar un único catacter de una expresión y que este pertenezca a dicho conjunto.
+
+Ejemplo de uso
+```cpp
+LanguageExpression exp("S(\"abc#\"");
+
+exp.check("b");   // true
+exp.check("#");   // true
+exp.check("d");   // false
+```
+
 ### `STR()`
 
 ```cpp
