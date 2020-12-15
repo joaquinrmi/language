@@ -9,6 +9,7 @@ namespace dnc
    public:
       static bool countNextChar(const std::string& utf8_chars, int& target, uint32_t pos);
       static bool readNextByte(const std::string& utf8_chars, uint32_t pos);
+      static bool getCharCode(const std::string& utf8_chars, uint32_t pos, uint32_t& char_code);
 
    private:
       UTF8Analyzer();

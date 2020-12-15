@@ -357,6 +357,24 @@ namespace dnc
          command = new EXPCommand(scope.expressions[exp_pos]);
          return true;
       }},
+
+      {"R", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         if(args.size() != 2)
+         {
+            return false;
+         }
+
+         uint32_t min = atof(args[0].value.c_str());
+         uint32_t max = atof(args[1].value.c_str());
+
+         if(max < min)
+         {
+            return false;
+         }
+
+         command = new RANGECommand(min, max);
+         return true;
+      }},
    };
 
    LanguageExpression::LanguageExpression() :
@@ -1645,5 +1663,58 @@ namespace dnc
    string LanguageExpression::EXPCommand::toString() const
    {
       return expression->toString();
+   }
+
+   /*
+      class LanguageExpression::RANGECommand
+   */
+   LanguageExpression::RANGECommand::RANGECommand()
+   {}
+
+   LanguageExpression::RANGECommand::RANGECommand(uint32_t min, uint32_t max) :
+      min(min),
+      max(max)
+   {}
+
+   LanguageExpression::RANGECommand::~RANGECommand()
+   {}
+
+   bool LanguageExpression::RANGECommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      uint32_t char_code;
+      if(!UTF8Analyzer::getCharCode(text, pos, char_code))
+      {
+         return false;
+      }
+
+      if(char_code < min || char_code > max)
+      {
+         return false;
+      }
+
+      int char_count;
+      if(!UTF8Analyzer::countNextChar(text, char_count, pos))
+      {
+         return false;
+      }
+
+      pos += char_count;
+
+      return true;
+   }
+
+   LanguageExpression::Command* LanguageExpression::RANGECommand::copy() const
+   {
+      return new RANGECommand(min, max);
+   }
+
+   string LanguageExpression::RANGECommand::toString() const
+   {
+      return string("R(") + dnc::toString(min) + "," + dnc::toString(max) + ")";
    }
 }

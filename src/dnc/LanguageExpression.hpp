@@ -279,6 +279,23 @@ namespace dnc
          const LanguageExpression* expression;
       };
 
+      class RANGECommand : public Command
+      {
+      public:
+         RANGECommand();
+         RANGECommand(uint32_t min, uint32_t max);
+         ~RANGECommand();
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         uint32_t min;
+         uint32_t max;
+      };
+
       struct CommandToken
       {
          enum Type

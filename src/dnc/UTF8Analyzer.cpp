@@ -70,4 +70,66 @@ namespace dnc
 		
 		return false;
 	}
+
+	bool UTF8Analyzer::getCharCode(const string& utf8_chars, uint32_t pos, uint32_t& char_code)
+	{
+		if(pos >= utf8_chars.size()) return false;
+
+		int char_large;
+		if(!countNextChar(utf8_chars, char_large, pos))
+		{
+			return false;
+		}
+
+		if(char_large == 1)
+		{
+			char_code = utf8_chars[pos];
+			return true;
+		}
+		else if(char_large == 2)
+		{
+			uint16_t c0 = utf8_chars[pos];
+			uint16_t c1 = utf8_chars[pos + 1];
+
+			c0 = c0 << 6;
+			c0 = c0 & 0b0000011111000000;
+			c1 = c1 & 0b0000000000111111;
+
+			char_code = c0 | c1;
+			return true;
+		}
+		else if(char_code == 3)
+		{
+			uint16_t c0 = utf8_chars[pos];
+			uint16_t c1 = utf8_chars[pos + 1];
+			uint16_t c2 = utf8_chars[pos + 2];
+
+			c0 = c0 << 12;
+			c1 = c1 << 6;
+
+			c0 = c0 & 0b1111000000000000;
+			c1 = c1 & 0b0000111111000000;
+			c2 = c2 & 0b0000000000111111;
+
+			char_code = c0 | c1 | c2;
+			return true;
+		}
+
+		uint32_t c0 = utf8_chars[pos];
+		uint32_t c1 = utf8_chars[pos + 1];
+		uint32_t c2 = utf8_chars[pos + 2];
+		uint32_t c3 = utf8_chars[pos + 3];
+
+		c0 = c0 << 18;
+		c1 = c1 << 12;
+		c2 = c2 << 6;
+
+		c0 = c0 & 0b000111000000000000000000;
+		c1 = c1 & 0b000000111111000000000000;
+		c2 = c2 & 0b000000000000111111000000;
+		c3 = c3 & 0b000000000000000000111111;
+
+		char_code = c0 | c1 | c2 | c3;
+		return true;
+	}
 }
