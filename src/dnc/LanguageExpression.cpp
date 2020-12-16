@@ -407,12 +407,43 @@ namespace dnc
       }},
 
       {"S", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
-         if(args.size() != 1)
+         command = new SETCommand();
+
+         for(uint32_t i = 0; i < args.size(); ++i)
          {
-            return false;
+            if(args[i].type == LanguageExpression::CommandToken::STRING)
+            {
+               reinterpret_cast<SETCommand*>(command)->addFromString(args[i].value);
+               continue;
+            }
+
+            if(args[i].type != LanguageExpression::CommandToken::COMMAND_SEQUENCE)
+            {
+               delete command;
+               return false;
+            }
+
+            vector<Command*> sequence;
+            string& expression = args[i].value;
+            uint32_t pos = 0;
+
+            if(!createCommandSequence(sequence, scope, expression, pos, expression.size()))
+            {
+               delete command;
+               return false;
+            }
+
+            if(sequence.size() > 1)
+            {
+               delete command;
+               return false;
+            }
+
+            auto range = reinterpret_cast<RANGECommand*>(sequence[0]);
+
+            reinterpret_cast<SETCommand*>(command)->addElement(range->getMin(), range->getMax());
          }
 
-         command = new SETCommand(args[0].value);
          return true;
       }},
    };
@@ -1719,6 +1750,16 @@ namespace dnc
    LanguageExpression::RANGECommand::~RANGECommand()
    {}
 
+   uint32_t LanguageExpression::RANGECommand::getMin() const
+   {
+      return min;
+   }
+
+   uint32_t LanguageExpression::RANGECommand::getMax() const
+   {
+      return max;
+   }
+
    bool LanguageExpression::RANGECommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -1836,9 +1877,29 @@ namespace dnc
    LanguageExpression::SETCommand::SETCommand()
    {}
 
-   LanguageExpression::SETCommand::SETCommand(const string& chars) :
-      chars(chars)
+   LanguageExpression::SETCommand::SETCommand(const string& chars)
    {
+      addFromString(chars);
+   }
+
+   LanguageExpression::SETCommand::~SETCommand()
+   {}
+
+   void LanguageExpression::SETCommand::addElement(uint32_t min, uint32_t max)
+   {
+      for(uint32_t i = min; i < max; ++i)
+      {
+         value.insert(UTF8Analyzer::getChar(i));
+      }
+      value.insert(UTF8Analyzer::getChar(max));
+
+      ranges.push_back({ min, max });
+   }
+
+   void LanguageExpression::SETCommand::addFromString(const string& chars)
+   {
+      this->chars += chars;
+
       uint32_t pos = 0;
       int char_count = 0;
 
@@ -1849,9 +1910,6 @@ namespace dnc
          pos += char_count;
       }
    }
-
-   LanguageExpression::SETCommand::~SETCommand()
-   {}
 
    bool LanguageExpression::SETCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
@@ -1882,6 +1940,13 @@ namespace dnc
 
    string LanguageExpression::SETCommand::toString() const
    {
-      return string("S(\"") + chars + "\")";
+      string result = string("S(\"") + chars + "\"";
+      for(uint32_t i = 0; i < ranges.size(); ++i)
+      {
+         result += ",R(" + dnc::toString(ranges[i].min) + "," + dnc::toString(ranges[i].max) + ")";
+      }
+      result += ")";
+
+      return result;
    }
 }

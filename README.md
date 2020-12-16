@@ -287,15 +287,11 @@ exp.check("1-2-3-");    // true
 
 ### `S()`
 
-```cpp
-S::S(const std::string& char_set);
-```
-
-Define un conjunto de caracteres para validar un único catacter de una expresión y que este pertenezca a dicho conjunto.
+Define un conjunto de caracteres para validar un único catacter de una expresión y que este pertenezca a dicho conjunto. Recibe como parámetros cualquier cantidad de elementos de los siguientes tipos: **cadena** de texto, de la que se tomará cada caracter como un elemento del conjunto y **rango** de valores unicode.
 
 Ejemplo de uso
 ```cpp
-LanguageExpression exp("S(\"abc#\"");
+LanguageExpression exp("S(R(97,122),\"#\")");
 
 exp.check("b");   // true
 exp.check("#");   // true

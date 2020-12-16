@@ -32,6 +32,23 @@ namespace dnc
          std::vector<const LanguageExpression*> expressions;
       };
 
+      struct CommandToken
+      {
+         enum Type
+         {
+            BOOLEAN,
+            STRING,
+            NUMBER,
+            COMMAND_SEQUENCE
+         };
+
+         Type type;
+         std::string value;
+         uint32_t char_count;
+      };
+
+      typedef std::vector<CommandToken> CommandArgs;
+
       typedef std::function<void(ParseProduct)> FactoryFunction;
 
       LanguageExpression();
@@ -287,6 +304,9 @@ namespace dnc
          RANGECommand(uint32_t min, uint32_t max);
          virtual ~RANGECommand();
 
+         uint32_t getMin() const;
+         uint32_t getMax() const;
+
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          Command* copy() const override;
@@ -330,11 +350,18 @@ namespace dnc
       class SETCommand : public Command
       {
       public:
+         struct Range
+         {
+            uint32_t min;
+            uint32_t max;
+         };
+
          SETCommand();
          SETCommand(const std::string& chars);
          ~SETCommand();
 
          void addElement(uint32_t min, uint32_t max);
+         void addFromString(const std::string& chars);
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
@@ -344,24 +371,16 @@ namespace dnc
       private:
       	std::string chars;
          std::unordered_set<std::string> value;
+         std::vector<Range> ranges;
       };
 
-      struct CommandToken
+      class SWITCHCommand : public Command
       {
-         enum Type
-         {
-            BOOLEAN,
-            STRING,
-            NUMBER,
-            COMMAND_SEQUENCE
-         };
-
-         Type type;
-         std::string value;
-         uint32_t char_count;
+      public:
+         SWITCHCommand();
+         ~SWITCHCommand();
       };
 
-      typedef std::vector<CommandToken> CommandArgs; 
       typedef std::function<bool(Command*&, CommandArgs&, CommandScope&)> CommandCreator;
 
       static const std::map<std::string, CommandCreator> COMMAND_CREATORS;

@@ -132,4 +132,46 @@ namespace dnc
 		char_code = c0 | c1 | c2 | c3;
 		return true;
 	}
+
+	string UTF8Analyzer::getChar(uint32_t char_code)
+	{
+		string result;
+
+		if(char_code < 0x80)
+		{
+			result.push_back(char(char_code));
+		}
+		else if(char_code < 0x800)
+		{
+			char y = 0b11000000 | ((char_code & 0b11111000000) >> 6);
+			char x = 0b10000000 | (char_code & 0b111111);
+
+			result.push_back(y);
+			result.push_back(x);
+		}
+		else if(char_code < 0x10000)
+		{
+			char z = 0b11100000 | ((char_code & 0b1111000000000000) >> 12);
+			char y = 0b10000000 | ((char_code & 0b111111000000) >> 6);
+			char x = 0b10000000 | (char_code & 0b111111);
+
+			result.push_back(z);
+			result.push_back(y);
+			result.push_back(x);
+		}
+		else if(char_code < 0x100000)
+		{
+			char u = 0b11110000 | ((char_code & 0b111000000000000000000) >> 18);
+			char z = 0b10000000 | ((char_code & 0b1111110000000000) >> 12);
+			char y = 0b10000000 | ((char_code & 0b111111000000) >> 6);
+			char x = 0b10000000 | (char_code & 0b111111);
+
+			result.push_back(u);
+			result.push_back(z);
+			result.push_back(y);
+			result.push_back(x);
+		}
+
+		return result;
+	}
 }
