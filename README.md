@@ -2,6 +2,34 @@
 
 Language es una pequeña librería que te permitirá trabajar con lenguajes (especialmente de programación) en C++. Su funcionamiento es simple y consiste en definir el lenguaje utilizando objetos de tipo `LanguageExpression`, el cual representa una única expresión.
 
+* [https://github.com/joaquinrmi/language#forma-de-uso][Forma de uso]
+    + [https://github.com/joaquinrmi/language#validar-una-expresi%C3%B3n][Validar una expresión]
+    + [https://github.com/joaquinrmi/language#callback-de-validaci%C3%B3n][Callback de validación]
+* [https://github.com/joaquinrmi/language#comandos][Comandos]
+    + [https://github.com/joaquinrmi/language#\_][`_`]
+    + [https://github.com/joaquinrmi/language#-][`-`]
+    + [https://github.com/joaquinrmi/language#char][`CHAR()`]
+    + [https://github.com/joaquinrmi/language#exp][`EXP()`]
+    + [https://github.com/joaquinrmi/language#inumt][`INUMT()`]
+    + [https://github.com/joaquinrmi/language#l][`L()`]
+    + [https://github.com/joaquinrmi/language#ll][`LL()`]
+    + [https://github.com/joaquinrmi/language#lu][`LU()`]
+    + [https://github.com/joaquinrmi/language#num][`NUM()`]
+    + [https://github.com/joaquinrmi/language#numt][`NUMT()`]
+    + [https://github.com/joaquinrmi/language#opt][`OPT()`]
+    + [https://github.com/joaquinrmi/language#r][`R()`]
+    + [https://github.com/joaquinrmi/language#rep][`REP()`]
+    + [https://github.com/joaquinrmi/language#repif][`REPIF()`]
+    + [https://github.com/joaquinrmi/language#s][`S()`]
+    + [https://github.com/joaquinrmi/language#str][`STR()`]
+    + [https://github.com/joaquinrmi/language#switch][`SWITCH()`]
+    + [https://github.com/joaquinrmi/language#or][`OR()`]
+    + [https://github.com/joaquinrmi/language#uchar][`UCHAR()`]
+    + [https://github.com/joaquinrmi/language#xor][`XOR()`]
+* [https://github.com/joaquinrmi/language#ejemplos][Ejemplos]
+    + [https://github.com/joaquinrmi/language#calculadora][Calculadora]
+* [https://github.com/joaquinrmi/language#caracter%C3%ADsticas-t%C3%A9cnicas][Características técnicas]
+
 ## Forma de uso
 
 Hay dos formas de crear una nueva expresión, éstas son mediante su constructor y con el uso del método `LanguageExpression::create()`. En ambos casos, habrá que pasarle uno o dos argumentos. El primero es un `std::string` que contiene los **comandos** que formarán la expresión. El segundo argumento es un `std::vector<LanguageExpression*>` que contiene punteros a otros objetos de tipo `languageExpression` creados con anterioridad. Este segundo comando sólo será utilizado en caso de usar el comando `EXP()`.
@@ -347,6 +375,54 @@ LanguageExpression exp("XOR(NUM(0),NUM(1))NUM(2)");
 exp.check("02");     // true
 exp.check("12");     // true
 exp.check("012");    // false
+```
+
+## Ejemplos
+
+### Calculadora
+
+En este ejemplo se construirá una calculadora con las siguientes operaciones:
+* suma (`+`),
+* resta (`-`),
+* multiplicación (`*`),
+* división (`/`).
+Además, se incluirá soporte para la utilización de paréntesis `()` y corchetes `[]`.
+
+Comenzamos sumando dos números, por ejemplo `5 + 6`, para ello podemos definir un objeto de tipo `LanguageExpression` de la siguiente forma:
+```cpp
+auto* sum_exp = new LanguageExpression("NUMT()-UCHAR(\"+\")-NUMT()");
+```
+De la misma forma, podemos definir el objeto correspondiente para las demás operaciones:
+```cpp
+auto* rest_exp = new LanguageExpression("NUMT()-UCHAR(\"-\")-NUMT()");
+auto* mult_exp = new LanguageExpression("NUMT()-UCHAR(\"*\")-NUMT()");
+auto* div_exp = new LanguageExpression("NUMT()-UCHAR(\"/\")-NUMT()");
+```
+
+Con todo lo anterior, podemos reconocer las operaciones básicas entre dos números, pero no seremos capaces de reconocer operaciones combinadas, como `2 * 3 + 5`. Para lograr esto tendremos que redefinir nuestras operaciones: cuando decidimos que queríamos sumar (o restas, o multiplicar, etc.) dos números, en realidad necesitábamos sumar dos **expresiones**.
+
+Pero ¿qué entendemos por expresión? En primer lugar, una expresión puede ser un número, por lo que necesitamos definir:
+```cpp
+LanguageExpression num_exp("NUMT()");
+```
+Además, como vemos en `2 * 3 + 5`, una expresión puede ser también una operación entre dos expresiones. Y, si analizamos `2 * (3 + 5)` o `2 * [3] + 5`, vemos que una expresión es también un número o una operación encerrada entre paréntesis o entre corchetes. Pero ¿qué sucede con una expresión como `(((((5))))) + 3`? Con este ejemplo vemos que tanto los paréntesis como los corchetes pueden encerrar también a otros paréntesis y/o corchetes, por lo que necesitamos que puedan encerrar cualquier expresión válida.
+
+Ahora estamos en condiciones de definir correctamente todas las operaciones y los paréntesis y los corchetes:
+```cpp
+auto* sum_exp = new LanguageExpression("EXP(0)-UCHAR(\"+\")-EXP(0)", 0, { math_exp });
+auto* rest_exp = new LanguageExpression("EXP(0)-UCHAR(\"-\")-EXP(0)", 0, { math_exp });
+auto* mult_exp = new LanguageExpression("EXP(0)-UCHAR(\"*\")-EXP(0)", 0, { math_exp });
+auto* div_exp = new LanguageExpression("EXP(0)-UCHAR(\"/\")-EXP(0)", 0, { math_exp });
+auto* bracket_exp = new LanguageExpression("UCHAR(\"(\")-EXP(0)-UCHAR(\")\")", 0, { math_exp });
+auto* sq_bracket_exp = new LanguageExpression("UCHAR(\"[\")-EXP(0)-UCHAR(\"]\")", 0, { math_exp });
+```
+Aquí estamos definiendo todas las expresiones en términos de todas las expresiones, las cuales se referencian con la expresión `math_exp`. Como `math_exp` puede ser un número, una operación o una expresión encerrada entre paréntesis o corchetes, podemos definirla con el comando `SWITCH()`:
+```cpp
+LanguageExpression math_exp(
+   "SWITCH(EXP(0),EXP(1),EXP(2),EXP(3),EXP(4),EXP(5),EXP(6))", 0,
+   { num_exp, bracket_exp, sq_bracker_exp,
+      sum_exp, rest_exp, mult_exp, div_exp }
+);
 ```
 
 ## Características técnicas
