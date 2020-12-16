@@ -14,6 +14,24 @@ namespace dnc
    class LanguageExpression
    {
    public:
+      struct ExpressionChar
+      {
+         enum Type
+         {
+            TERMINAL,
+            NONTERMINAL,
+            ANY_TERMINAL
+         };
+
+         Type type;
+         std::string value;
+
+         ExpressionChar();
+         ExpressionChar(const std::string& value);
+      };
+
+      typedef std::vector<ExpressionChar> InitExpressionChar;
+
       class Command
       {
       public:
@@ -21,6 +39,8 @@ namespace dnc
          virtual ~Command();
 
          virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const = 0;
+
+         virtual InitExpressionChar getInitExpressionChar() const = 0;
 
          virtual Command* copy() const = 0;
          virtual std::string toString() const = 0;
@@ -55,6 +75,8 @@ namespace dnc
       LanguageExpression(const std::string& text, const std::vector<const LanguageExpression*>& expressions = std::vector<const LanguageExpression*>());
       virtual ~LanguageExpression();
 
+      virtual InitExpressionChar getInitExpressionChar() const;
+
       void setFactoryFunction(const FactoryFunction& func);
       void resetFactoryFunction();
 
@@ -80,6 +102,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
 
@@ -95,6 +119,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
       };
@@ -108,6 +134,8 @@ namespace dnc
          ~STRCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         InitExpressionChar getInitExpressionChar() const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -126,6 +154,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
 
@@ -143,6 +173,8 @@ namespace dnc
          ~NUMTCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         InitExpressionChar getInitExpressionChar() const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -163,6 +195,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
 
@@ -180,6 +214,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
       };
@@ -191,6 +227,8 @@ namespace dnc
          ~OPTBLANKCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         InitExpressionChar getInitExpressionChar() const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -204,6 +242,8 @@ namespace dnc
          virtual ~REPCommand();
 
          virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         InitExpressionChar getInitExpressionChar() const override;
 
          virtual Command* copy() const override;
          virtual std::string toString() const override;
@@ -223,6 +263,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
 
@@ -239,6 +281,8 @@ namespace dnc
          ~ORCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         InitExpressionChar getInitExpressionChar() const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -257,6 +301,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
 
@@ -274,6 +320,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
 
@@ -289,6 +337,8 @@ namespace dnc
          ~EXPCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         InitExpressionChar getInitExpressionChar() const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -309,6 +359,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
 
@@ -324,6 +376,8 @@ namespace dnc
          ~LETTERCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         InitExpressionChar getInitExpressionChar() const override;
 
          Command* copy() const override;
          std::string toString() const override;
@@ -365,6 +419,8 @@ namespace dnc
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
+         InitExpressionChar getInitExpressionChar() const override;
+
          Command* copy() const override;
          std::string toString() const override;
 
@@ -383,6 +439,8 @@ namespace dnc
          void addCommand(Command* command);
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         InitExpressionChar getInitExpressionChar() const override;
 
          Command* copy() const override;
          std::string toString() const override;

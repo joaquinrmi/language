@@ -505,6 +505,15 @@ namespace dnc
       clear();
    }
 
+   LanguageExpression::InitExpressionChar LanguageExpression::getInitExpressionChar() const
+   {
+      if(command_sequence.size() > 0)
+      {
+         return command_sequence[0]->getInitExpressionChar();
+      }
+      return { ExpressionChar("") };
+   }
+
    void LanguageExpression::setFactoryFunction(const FactoryFunction& func)
    {
       has_factory_function = true;
@@ -909,6 +918,11 @@ namespace dnc
    LanguageExpression::UCHARCommand::~UCHARCommand()
    {}
 
+   LanguageExpression::InitExpressionChar LanguageExpression::UCHARCommand::getInitExpressionChar() const
+   {
+      return { ExpressionChar(unique_char) };
+   }
+
    bool LanguageExpression::UCHARCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -950,6 +964,11 @@ namespace dnc
 
    LanguageExpression::CHARCommand::~CHARCommand()
    {}
+
+   LanguageExpression::InitExpressionChar LanguageExpression::CHARCommand::getInitExpressionChar() const
+   {
+      return { ExpressionChar() };
+   }
 
    bool LanguageExpression::CHARCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
@@ -999,6 +1018,13 @@ namespace dnc
 
    LanguageExpression::STRCommand::~STRCommand()
    {}
+
+   LanguageExpression::InitExpressionChar LanguageExpression::STRCommand::getInitExpressionChar() const
+   {
+      int char_count = 0;
+      UTF8Analyzer::countNextChar(value, char_count, 0);
+      return { ExpressionChar(value.substr(0, char_count)) };
+   }
 
    bool LanguageExpression::STRCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
@@ -1050,6 +1076,16 @@ namespace dnc
 
    LanguageExpression::NUMCommand::~NUMCommand()
    {}
+
+   LanguageExpression::InitExpressionChar LanguageExpression::NUMCommand::getInitExpressionChar() const
+   {
+      string init_chars;
+      for(uint32_t i = min_num; i <= max_num; ++i)
+      {
+         init_chars += dnc::toString(i);
+      }
+      return { ExpressionChar(init_chars) };
+   }
 
    bool LanguageExpression::NUMCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
@@ -1118,6 +1154,11 @@ namespace dnc
 
    LanguageExpression::NUMTCommand::~NUMTCommand()
    {}
+
+   LanguageExpression::InitExpressionChar LanguageExpression::NUMTCommand::getInitExpressionChar() const
+   {
+      return { ExpressionChar("0123456789") };
+   }
 
    bool LanguageExpression::NUMTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
@@ -1201,6 +1242,11 @@ namespace dnc
    LanguageExpression::INUMTCommand::~INUMTCommand()
    {}
 
+   LanguageExpression::InitExpressionChar LanguageExpression::INUMTCommand::getInitExpressionChar() const
+   {
+      return { ExpressionChar("0123456789") };
+   }
+
    bool LanguageExpression::INUMTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -1274,6 +1320,11 @@ namespace dnc
    LanguageExpression::BLANKCommand::~BLANKCommand()
    {}
 
+   LanguageExpression::InitExpressionChar LanguageExpression::BLANKCommand::getInitExpressionChar() const
+   {
+      return { ExpressionChar(" \n\t\r") };
+   }
+
    bool LanguageExpression::BLANKCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -1322,6 +1373,11 @@ namespace dnc
    LanguageExpression::OPTBLANKCommand::~OPTBLANKCommand()
    {}
 
+   LanguageExpression::InitExpressionChar LanguageExpression::OPTBLANKCommand::getInitExpressionChar() const
+   {
+      return { ExpressionChar(" \n\r\t") };
+   }
+
    bool LanguageExpression::OPTBLANKCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -1369,6 +1425,15 @@ namespace dnc
       min(min),
       max(max)
    {}
+
+   LanguageExpression::InitExpressionChar LanguageExpression::REPCommand::getInitExpressionChar() const
+   {
+      if(commands.size() > 0)
+      {
+         return commands[0]->getInitExpressionChar();
+      }
+      return { ExpressionChar("") };
+   }
 
    LanguageExpression::REPCommand::~REPCommand()
    {
@@ -1458,6 +1523,16 @@ namespace dnc
       {
          delete c;
       }
+   }
+
+   LanguageExpression::InitExpressionChar LanguageExpression::REPIFCommand::getInitExpressionChar() const
+   {
+      if(commands.size() > 0)
+      {
+         return commands[0]->getInitExpressionChar();
+      }
+
+      return { ExpressionChar("") };
    }
 
    bool LanguageExpression::REPIFCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
@@ -1577,6 +1652,24 @@ namespace dnc
       }
    }
 
+   LanguageExpression::InitExpressionChar LanguageExpression::ORCommand::getInitExpressionChar() const
+   {
+      auto first_expression_char = first[0]->getInitExpressionChar();
+      auto second_expression_char = second[0]->getInitExpressionChar();
+
+      InitExpressionChar init_exp_char;
+      for(auto& exp_char : first_expression_char)
+      {
+         init_exp_char.push_back(move(exp_char));
+      }
+      for(auto& exp_char : second_expression_char)
+      {
+         init_exp_char.push_back(move(exp_char));
+      }
+
+      return init_exp_char;
+   }
+
    bool LanguageExpression::ORCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -1645,6 +1738,24 @@ namespace dnc
       }
    }
 
+   LanguageExpression::InitExpressionChar LanguageExpression::XORCommand::getInitExpressionChar() const
+   {
+      auto first_expression_char = first[0]->getInitExpressionChar();
+      auto second_expression_char = second[0]->getInitExpressionChar();
+
+      InitExpressionChar init_exp_char;
+      for(auto& exp_char : first_expression_char)
+      {
+         init_exp_char.push_back(move(exp_char));
+      }
+      for(auto& exp_char : second_expression_char)
+      {
+         init_exp_char.push_back(move(exp_char));
+      }
+
+      return init_exp_char;
+   }
+
    bool LanguageExpression::XORCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -1705,6 +1816,11 @@ namespace dnc
       }
    }
 
+   LanguageExpression::InitExpressionChar LanguageExpression::OPTCommand::getInitExpressionChar() const
+   {
+      return sequence[0]->getInitExpressionChar();
+   }
+
    bool LanguageExpression::OPTCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -1749,6 +1865,11 @@ namespace dnc
    LanguageExpression::EXPCommand::~EXPCommand()
    {}
 
+   LanguageExpression::InitExpressionChar LanguageExpression::EXPCommand::getInitExpressionChar() const
+   {
+      return expression->getInitExpressionChar();
+   }
+
    bool LanguageExpression::EXPCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -1782,6 +1903,16 @@ namespace dnc
 
    LanguageExpression::RANGECommand::~RANGECommand()
    {}
+
+   LanguageExpression::InitExpressionChar LanguageExpression::RANGECommand::getInitExpressionChar() const
+   {
+      string init_chars;
+      for(uint32_t i = min; i < max; ++i)
+      {
+         init_chars += UTF8Analyzer::getChar(i);
+      }
+      return { ExpressionChar(init_chars) };
+   }
 
    uint32_t LanguageExpression::RANGECommand::getMin() const
    {
@@ -1844,6 +1975,11 @@ namespace dnc
 
    LanguageExpression::LETTERCommand::~LETTERCommand()
    {}
+
+   LanguageExpression::InitExpressionChar LanguageExpression::LETTERCommand::getInitExpressionChar() const
+   {
+      return { ExpressionChar("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") };
+   }
 
    bool LanguageExpression::LETTERCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
@@ -1917,6 +2053,16 @@ namespace dnc
 
    LanguageExpression::SETCommand::~SETCommand()
    {}
+
+   LanguageExpression::InitExpressionChar LanguageExpression::SETCommand::getInitExpressionChar() const
+   {
+      string init_chars;
+      for(auto& val : value)
+      {
+         init_chars += val;
+      }
+      return { ExpressionChar(init_chars) };
+   }
 
    void LanguageExpression::SETCommand::addElement(uint32_t min, uint32_t max)
    {
@@ -1997,6 +2143,20 @@ namespace dnc
       commands.insert(command);
    }
 
+   LanguageExpression::InitExpressionChar LanguageExpression::SWITCHCommand::getInitExpressionChar() const
+   {
+      InitExpressionChar init_exp_char;
+      for(auto command : commands)
+      {
+         auto exp_char = command->getInitExpressionChar();
+         for(auto& c : exp_char)
+         {
+            init_exp_char.push_back(move(c));
+         }
+      }
+      return init_exp_char;
+   }
+
    bool LanguageExpression::SWITCHCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       if(pos >= text.size() || pos >= last_pos)
@@ -2043,4 +2203,16 @@ namespace dnc
 
       return result;
    }
+
+   /*
+      class LanguageExpression::ExpressionChar
+   */
+   LanguageExpression::ExpressionChar::ExpressionChar() :
+      type(ANY_TERMINAL)
+   {}
+
+   LanguageExpression::ExpressionChar::ExpressionChar(const std::string& value) :
+      type(TERMINAL),
+      value(value)
+   {}
 }
