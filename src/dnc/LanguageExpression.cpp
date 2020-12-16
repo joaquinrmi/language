@@ -446,6 +446,39 @@ namespace dnc
 
          return true;
       }},
+
+      {"SWITCH", [](Command*& command, LanguageExpression::CommandArgs& args, LanguageExpression::CommandScope& scope) -> bool {
+         command = new SWITCHCommand();
+
+         for(uint32_t i = 0; i < args.size(); ++i)
+         {
+            if(args[i].type != LanguageExpression::CommandToken::COMMAND_SEQUENCE)
+            {
+               delete command;
+               return false;
+            }
+
+            vector<Command*> sequence;
+            string& expression = args[i].value;
+            uint32_t pos = 0;
+
+            if(!createCommandSequence(sequence, scope, expression, pos, expression.size()))
+            {
+               delete command;
+               return false;
+            }
+
+            if(sequence.size() > 1)
+            {
+               delete command;
+               return false;
+            }
+
+            reinterpret_cast<SWITCHCommand*>(command)->addCommand(sequence[0]);
+         }
+
+         return true;
+      }},
    };
 
    LanguageExpression::LanguageExpression() :
@@ -1944,6 +1977,67 @@ namespace dnc
       for(uint32_t i = 0; i < ranges.size(); ++i)
       {
          result += ",R(" + dnc::toString(ranges[i].min) + "," + dnc::toString(ranges[i].max) + ")";
+      }
+      result += ")";
+
+      return result;
+   }
+
+   /*
+      class LanguageExpression::SWITCHCommand
+   */
+   LanguageExpression::SWITCHCommand::SWITCHCommand()
+   {}
+
+   LanguageExpression::SWITCHCommand::~SWITCHCommand()
+   {}
+
+   void LanguageExpression::SWITCHCommand::addCommand(Command* command)
+   {
+      commands.insert(command);
+   }
+
+   bool LanguageExpression::SWITCHCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      for(auto command : commands)
+      {
+         uint32_t current_pos = pos;
+         if(command->check(text, current_pos, last_pos))
+         {
+            pos = current_pos;
+            return true;
+         }
+      }
+
+      return true;
+   }
+
+   LanguageExpression::Command* LanguageExpression::SWITCHCommand::copy() const
+   {
+      auto new_command = new SWITCHCommand();
+      for(auto& command : commands)
+      {
+         new_command->addCommand(command->copy());
+      }
+      return new_command;
+   }
+
+   string LanguageExpression::SWITCHCommand::toString() const
+   {
+      string result = "SWITCH(";
+      for(auto& command : commands)
+      {
+         if(result.size() > 7)
+         {
+            result += ",";
+         }
+
+         result += command->toString();
       }
       result += ")";
 

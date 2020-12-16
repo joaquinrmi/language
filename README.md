@@ -293,9 +293,9 @@ Ejemplo de uso
 ```cpp
 LanguageExpression exp("S(R(97,122),\"#\")");
 
-exp.check("b");   // true
+exp.check("g");   // true
 exp.check("#");   // true
-exp.check("d");   // false
+exp.check("5");   // false
 ```
 
 ### `STR()`
@@ -305,6 +305,16 @@ STR::STR(const std::string& str);
 ```
 
 Define una cadena de caracteres completa.
+
+### `SWITCH()`
+
+```cpp
+SWITCH::SWITCH(Command* command, ...);
+```
+
+Define un conjunto de comandos. Como parámetros recibe cualquier cantidad de comandos individuales, por lo que no se aceptarán secuencias de comandos. En muchos casos, se preferirá utilizar otro comando en vez de `SWITCH()`, como `OR()` o `XOR()` o `SET()`, ya que tendrán comportamientos similares. Este comando siempre devuelve `true`.
+
+**Importante**: en la versión actual, este comando tiene un mal rendimiento debido al algoritmo utilizado como validación: intenta validar la expresión una vez para cada comando en el conjunto hasta dar con el correcto. Como se podrá inferir, dependiendo de los comandos involucrados, esta técnica puede tener un pésimo rendimiento debido al coste de validación de los comandos individuales.
 
 ### `OR()`
 

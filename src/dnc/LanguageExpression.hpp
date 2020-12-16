@@ -379,6 +379,16 @@ namespace dnc
       public:
          SWITCHCommand();
          ~SWITCHCommand();
+
+         void addCommand(Command* command);
+
+         bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
+         Command* copy() const override;
+         std::string toString() const override;
+
+      private:
+         std::unordered_set<Command*> commands;
       };
 
       typedef std::function<bool(Command*&, CommandArgs&, CommandScope&)> CommandCreator;
