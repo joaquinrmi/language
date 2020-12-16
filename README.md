@@ -2,33 +2,33 @@
 
 Language es una pequeña librería que te permitirá trabajar con lenguajes (especialmente de programación) en C++. Su funcionamiento es simple y consiste en definir el lenguaje utilizando objetos de tipo `LanguageExpression`, el cual representa una única expresión.
 
-* [https://github.com/joaquinrmi/language#forma-de-uso][Forma de uso]
-    + [https://github.com/joaquinrmi/language#validar-una-expresi%C3%B3n][Validar una expresión]
-    + [https://github.com/joaquinrmi/language#callback-de-validaci%C3%B3n][Callback de validación]
-* [https://github.com/joaquinrmi/language#comandos][Comandos]
-    + [https://github.com/joaquinrmi/language#\_][`_`]
-    + [https://github.com/joaquinrmi/language#-][`-`]
-    + [https://github.com/joaquinrmi/language#char][`CHAR()`]
-    + [https://github.com/joaquinrmi/language#exp][`EXP()`]
-    + [https://github.com/joaquinrmi/language#inumt][`INUMT()`]
-    + [https://github.com/joaquinrmi/language#l][`L()`]
-    + [https://github.com/joaquinrmi/language#ll][`LL()`]
-    + [https://github.com/joaquinrmi/language#lu][`LU()`]
-    + [https://github.com/joaquinrmi/language#num][`NUM()`]
-    + [https://github.com/joaquinrmi/language#numt][`NUMT()`]
-    + [https://github.com/joaquinrmi/language#opt][`OPT()`]
-    + [https://github.com/joaquinrmi/language#r][`R()`]
-    + [https://github.com/joaquinrmi/language#rep][`REP()`]
-    + [https://github.com/joaquinrmi/language#repif][`REPIF()`]
-    + [https://github.com/joaquinrmi/language#s][`S()`]
-    + [https://github.com/joaquinrmi/language#str][`STR()`]
-    + [https://github.com/joaquinrmi/language#switch][`SWITCH()`]
-    + [https://github.com/joaquinrmi/language#or][`OR()`]
-    + [https://github.com/joaquinrmi/language#uchar][`UCHAR()`]
-    + [https://github.com/joaquinrmi/language#xor][`XOR()`]
-* [https://github.com/joaquinrmi/language#ejemplos][Ejemplos]
-    + [https://github.com/joaquinrmi/language#calculadora][Calculadora]
-* [https://github.com/joaquinrmi/language#caracter%C3%ADsticas-t%C3%A9cnicas][Características técnicas]
+* [Forma de uso](https://github.com/joaquinrmi/language#forma-de-uso)
+    + [Validar una expresión](https://github.com/joaquinrmi/language#validar-una-expresi%C3%B3n)
+    + [Callback de validación](https://github.com/joaquinrmi/language#callback-de-validaci%C3%B3n)
+* [Comandos](https://github.com/joaquinrmi/language#comandos)
+    + [`_`](https://github.com/joaquinrmi/language#\_)
+    + [`-`](https://github.com/joaquinrmi/language#-)
+    + [`CHAR()`](https://github.com/joaquinrmi/language#char)
+    + [`EXP()`](https://github.com/joaquinrmi/language#exp)
+    + [`INUMT()`](https://github.com/joaquinrmi/language#inumt)
+    + [`L()`](https://github.com/joaquinrmi/language#l)
+    + [`LL()`](https://github.com/joaquinrmi/language#ll)
+    + [`LU()`](https://github.com/joaquinrmi/language#lu)
+    + [`NUM()`](https://github.com/joaquinrmi/language#num)
+    + [`NUMT()`](https://github.com/joaquinrmi/language#numt)
+    + [`OPT()`](https://github.com/joaquinrmi/language#opt)
+    + [`R()`](https://github.com/joaquinrmi/language#r)
+    + [`REP()`](https://github.com/joaquinrmi/language#rep)
+    + [`REPIF()`](https://github.com/joaquinrmi/language#repif)
+    + [`S()`](https://github.com/joaquinrmi/language#s)
+    + [`STR()`](https://github.com/joaquinrmi/language#str)
+    + [`SWITCH()`](https://github.com/joaquinrmi/language#switch)
+    + [`OR()`](https://github.com/joaquinrmi/language#or)
+    + [`UCHAR()`](https://github.com/joaquinrmi/language#uchar)
+    + [`XOR()`](https://github.com/joaquinrmi/language#xor)
+* [Ejemplos](https://github.com/joaquinrmi/language#ejemplos)
+    + [Calculadora](https://github.com/joaquinrmi/language#calculadora)
+* [Características técnicas](https://github.com/joaquinrmi/language#caracter%C3%ADsticas-t%C3%A9cnicas)
 
 ## Forma de uso
 
