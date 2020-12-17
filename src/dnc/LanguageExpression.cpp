@@ -598,6 +598,11 @@ namespace dnc
       return false;
    }
 
+   bool LanguageExpression::jumpAndCheck(const string& text, uint32_t& pos) const
+   {
+      return false;
+   }
+
    void LanguageExpression::clear()
    {
       for(auto command : command_sequence)
@@ -2208,11 +2213,39 @@ namespace dnc
       class LanguageExpression::ExpressionChar
    */
    LanguageExpression::ExpressionChar::ExpressionChar() :
-      type(ANY_TERMINAL)
+      type(ANY_TERMINAL),
+      value("")
    {}
 
    LanguageExpression::ExpressionChar::ExpressionChar(const std::string& value) :
       type(TERMINAL),
       value(value)
+   {}
+
+   LanguageExpression::ExpressionChar::ExpressionChar(const LanguageExpression* ref) :
+      type(NONTERMINAL),
+      ref(ref)
+   {}
+
+   LanguageExpression::ExpressionChar::ExpressionChar(const ExpressionChar& exp_char) :
+      type(exp_char.type)
+   {
+      switch(type)
+      {
+      case TERMINAL:
+         value = exp_char.value;
+         break;
+
+      case NONTERMINAL:
+         ref = exp_char.ref;
+         break;
+
+      case ANY_TERMINAL:
+         value = "";
+         break;
+      }
+   }
+
+   LanguageExpression::ExpressionChar::~ExpressionChar()
    {}
 }

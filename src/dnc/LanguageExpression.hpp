@@ -24,10 +24,17 @@ namespace dnc
          };
 
          Type type;
-         std::string value;
+         union
+         {
+            std::string value;
+            const LanguageExpression* ref;
+         };
 
          ExpressionChar();
          ExpressionChar(const std::string& value);
+         ExpressionChar(const LanguageExpression* ref);
+         ExpressionChar(const ExpressionChar& exp_char);
+         ~ExpressionChar();
       };
 
       typedef std::vector<ExpressionChar> InitExpressionChar;
@@ -83,9 +90,11 @@ namespace dnc
       bool create(const std::string& text, uint32_t init_pos = 0, const std::vector<const LanguageExpression*>& expressions = std::vector<const LanguageExpression*>());
       bool create(const std::string& text, uint32_t init_pos, uint32_t last_pos, const std::vector<const LanguageExpression*>& expressions = std::vector<const LanguageExpression*>());
 
-      bool check(const std::string& text, uint32_t init_pos = 0, bool ignore_rest = true) const;
-      bool check(const std::string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest = true) const;
-      bool checkAndAdvance(const std::string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const;
+      virtual bool check(const std::string& text, uint32_t init_pos = 0, bool ignore_rest = true) const;
+      virtual bool check(const std::string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest = true) const;
+      virtual bool checkAndAdvance(const std::string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const;
+
+      bool jumpAndCheck(const std::string& text, uint32_t& pos) const;
 
       void clear();
 
