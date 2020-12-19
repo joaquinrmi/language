@@ -108,7 +108,7 @@ namespace dnc
             for(auto sec_ref : nonterminal_ref)
             {
                uint32_t sec_current_pos = current_pos;
-               if(!sec_ref->jumpAndCheck(text, sec_current_pos))
+               if(!sec_ref->jumpAndCheck(text, sec_current_pos, last_pos))
                {
                   continue;
                }

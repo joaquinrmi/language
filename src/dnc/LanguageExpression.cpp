@@ -598,7 +598,7 @@ namespace dnc
       return false;
    }
 
-   bool LanguageExpression::jumpAndCheck(const string& text, uint32_t& pos) const
+   bool LanguageExpression::jumpAndCheck(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
       return false;
    }
@@ -951,6 +951,11 @@ namespace dnc
       return false;
    }
 
+   bool LanguageExpression::UCHARCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
+   }
+
    LanguageExpression::Command* LanguageExpression::UCHARCommand::copy() const
    {
       return new UCHARCommand(unique_char);
@@ -995,6 +1000,11 @@ namespace dnc
       }
 
       return true;
+   }
+
+   bool LanguageExpression::CHARCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::CHARCommand::copy() const
@@ -1051,6 +1061,11 @@ namespace dnc
       pos += value.size();
 
       return true;
+   }
+
+   bool LanguageExpression::STRCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::STRCommand::copy() const
@@ -1120,6 +1135,11 @@ namespace dnc
          return true;
       }
 
+      return false;
+   }
+
+   bool LanguageExpression::NUMCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
       return false;
    }
 
@@ -1197,6 +1217,11 @@ namespace dnc
          return true;
       }
 
+      return false;
+   }
+
+   bool LanguageExpression::NUMTCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
       return false;
    }
 
@@ -1291,6 +1316,11 @@ namespace dnc
       return false;
    }
 
+   bool LanguageExpression::INUMTCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
+   }
+
    LanguageExpression::Command* LanguageExpression::INUMTCommand::copy() const
    {
       if(use_range)
@@ -1359,6 +1389,11 @@ namespace dnc
       return found;
    }
 
+   bool LanguageExpression::BLANKCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
+   }
+
    LanguageExpression::Command* LanguageExpression::BLANKCommand::copy() const
    {
       return new BLANKCommand();
@@ -1409,6 +1444,11 @@ namespace dnc
       return true;
    }
 
+   bool LanguageExpression::OPTBLANKCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
+   }
+
    LanguageExpression::Command* LanguageExpression::OPTBLANKCommand::copy() const
    {
       return new OPTBLANKCommand();
@@ -1431,6 +1471,14 @@ namespace dnc
       max(max)
    {}
 
+   LanguageExpression::REPCommand::~REPCommand()
+   {
+      for(auto c : commands)
+      {
+         delete c;
+      }
+   }
+
    LanguageExpression::InitExpressionChar LanguageExpression::REPCommand::getInitExpressionChar() const
    {
       if(commands.size() > 0)
@@ -1438,14 +1486,6 @@ namespace dnc
          return commands[0]->getInitExpressionChar();
       }
       return { ExpressionChar("") };
-   }
-
-   LanguageExpression::REPCommand::~REPCommand()
-   {
-      for(auto c : commands)
-      {
-         delete c;
-      }
    }
 
    bool LanguageExpression::REPCommand::check(const string& text, uint32_t& pos, uint32_t last_pos) const
@@ -1458,6 +1498,59 @@ namespace dnc
       uint32_t repeated = 0;
       uint32_t current_pos = pos;
       while(true)
+      {
+         if(!checkCommands(commands, text, current_pos, last_pos))
+         {
+            break;
+         }
+
+         repeated += 1;
+      }
+
+      pos = current_pos;
+
+      if(repeated >= min && repeated <= max)
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   bool LanguageExpression::REPCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(commands.size() == 0)
+      {
+         return false;
+      }
+
+      if(!commands[0]->jumpAndCheck(text, pos, last_pos))
+      {
+         return false;
+      }
+
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      uint32_t repeated = 0;
+      uint32_t current_pos = pos;
+
+      bool toRepeat = true;
+      for(uint32_t i = 1; i < commands.size(); ++i)
+      {
+         uint32_t sub_current_pos = current_pos;
+         if(!commands[i]->check(text, sub_current_pos, last_pos))
+         {
+            toRepeat = false;
+            break;
+         }
+         current_pos = sub_current_pos;
+      }
+      if(toRepeat) repeated = 1;
+
+      while(toRepeat)
       {
          if(!checkCommands(commands, text, current_pos, last_pos))
          {
@@ -1551,6 +1644,77 @@ namespace dnc
       uint32_t current_pos = pos;
       bool condition_found = false;
       while(true)
+      {
+         if(!checkCommands(commands, text, current_pos, last_pos))
+         {
+            if(condition_found && !ignore)
+            {
+               return false;
+            }
+            break;
+         }
+
+         repeated += 1;
+
+         if(!checkCommands(condition, text, current_pos, last_pos))
+         {
+            break;
+         }
+         condition_found = true;
+      }
+
+      pos = current_pos;
+
+      if(repeated >= min && repeated <= max)
+      {
+         return true;
+      }
+
+      return false;
+   }
+
+   bool LanguageExpression::REPIFCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(commands.size() == 0)
+      {
+         return false;
+      }
+
+      if(!commands[0]->jumpAndCheck(text, pos, last_pos))
+      {
+         return false;
+      }
+
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      uint32_t repeated = 0;
+      uint32_t current_pos = pos;
+      bool condition_found = false;
+
+      bool toRepeat = true;
+      for(uint32_t i = 1; i < commands.size(); ++i)
+      {
+         uint32_t sub_current_pos = current_pos;
+         if(!commands[i]->check(text, sub_current_pos, last_pos))
+         {
+            toRepeat = false;
+            break;
+         }
+         current_pos = sub_current_pos;
+      }
+      if(toRepeat)
+      {
+         repeated = 1;
+         if(checkCommands(condition, text, current_pos, last_pos))
+         {
+            condition_found = true;
+         }
+      }
+
+      while(toRepeat)
       {
          if(!checkCommands(commands, text, current_pos, last_pos))
          {
@@ -1697,6 +1861,56 @@ namespace dnc
       return false;
    }
 
+   bool LanguageExpression::ORCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      uint32_t current_pos = pos;
+      if(first[0]->jumpAndCheck(text, current_pos, last_pos))
+      {
+         bool completed = true;
+         for(uint32_t i = 1; i < first.size(); ++i)
+         {
+            if(!first[i]->check(text, current_pos, last_pos))
+            {
+               completed = false;
+               break;
+            }
+         }
+         if(completed)
+         {
+            pos = current_pos;
+            checkCommands(second, text, pos, last_pos);
+            return true;
+         }
+      }
+
+      current_pos = pos;
+      if(second[0]->jumpAndCheck(text, current_pos, last_pos))
+      {
+         bool completed = true;
+         for(uint32_t i = 1; i < second.size(); ++i)
+         {
+            if(!second[i]->check(text, current_pos, last_pos))
+            {
+               completed = false;
+               break;
+            }
+         }
+         if(completed)
+         {
+            pos = current_pos;
+            checkCommands(first, text, pos, last_pos);
+            return true;
+         }
+      }
+
+      return false;
+   }
+
    LanguageExpression::Command* LanguageExpression::ORCommand::copy() const
    {
       return new ORCommand(first, second);
@@ -1781,6 +1995,54 @@ namespace dnc
       return false;
    }
 
+   bool LanguageExpression::XORCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(pos >= text.size() || pos >= last_pos)
+      {
+         return false;
+      }
+
+      uint32_t current_pos = pos;
+      if(first[0]->jumpAndCheck(text, current_pos, last_pos))
+      {
+         bool completed = true;
+         for(uint32_t i = 1; i < first.size(); ++i)
+         {
+            if(!first[i]->check(text, current_pos, last_pos))
+            {
+               completed = false;
+               break;
+            }
+         }
+         if(completed)
+         {
+            pos = current_pos;
+            return true;
+         }
+      }
+
+      current_pos = pos;
+      if(second[0]->jumpAndCheck(text, current_pos, last_pos))
+      {
+         bool completed = true;
+         for(uint32_t i = 1; i < second.size(); ++i)
+         {
+            if(!second[i]->check(text, current_pos, last_pos))
+            {
+               completed = false;
+               break;
+            }
+         }
+         if(completed)
+         {
+            pos = current_pos;
+            return true;
+         }
+      }
+
+      return false;
+   }
+
    LanguageExpression::Command* LanguageExpression::XORCommand::copy() const
    {
       return new XORCommand(first, second);
@@ -1841,6 +2103,33 @@ namespace dnc
       return true;
    }
 
+   bool LanguageExpression::OPTCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      if(sequence.size() == 0)
+      {
+         return false;
+      }
+
+      uint32_t current_pos = pos;
+      if(!sequence[0]->jumpAndCheck(text, current_pos, last_pos))
+      {
+         return false;
+      }
+
+      pos = current_pos;
+
+      for(uint32_t i = 1; i < sequence.size(); ++i)
+      {
+         if(!sequence[i]->check(text, current_pos, last_pos))
+         {
+            return false;
+         }
+      }
+
+      pos = current_pos;
+      return true;
+   }
+
    LanguageExpression::Command* LanguageExpression::OPTCommand::copy() const
    {
       return new OPTCommand(sequence);
@@ -1883,6 +2172,11 @@ namespace dnc
       }
 
       return expression->checkAndAdvance(text, pos, last_pos, true);
+   }
+
+   bool LanguageExpression::EXPCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return true;
    }
 
    LanguageExpression::Command* LanguageExpression::EXPCommand::copy() const
@@ -1958,6 +2252,11 @@ namespace dnc
       return true;
    }
 
+   bool LanguageExpression::RANGECommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
+   }
+
    LanguageExpression::Command* LanguageExpression::RANGECommand::copy() const
    {
       return new RANGECommand(min, max);
@@ -2013,6 +2312,11 @@ namespace dnc
       pos += char_count;
 
       return true;
+   }
+
+   bool LanguageExpression::LETTERCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::LETTERCommand::copy() const
@@ -2117,6 +2421,11 @@ namespace dnc
       return true;
    }
 
+   bool LanguageExpression::SETCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
+   }
+
    LanguageExpression::Command* LanguageExpression::SETCommand::copy() const
    {
       return new SETCommand(chars);
@@ -2180,6 +2489,11 @@ namespace dnc
       }
 
       return true;
+   }
+
+   bool LanguageExpression::SWITCHCommand::jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return false;
    }
 
    LanguageExpression::Command* LanguageExpression::SWITCHCommand::copy() const

@@ -46,6 +46,7 @@ namespace dnc
          virtual ~Command();
 
          virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const = 0;
+         virtual bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const = 0;
 
          virtual InitExpressionChar getInitExpressionChar() const = 0;
 
@@ -94,7 +95,7 @@ namespace dnc
       virtual bool check(const std::string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest = true) const;
       virtual bool checkAndAdvance(const std::string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const;
 
-      bool jumpAndCheck(const std::string& text, uint32_t& pos) const;
+      bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const;
 
       void clear();
 
@@ -110,6 +111,7 @@ namespace dnc
          ~UCHARCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -127,6 +129,7 @@ namespace dnc
          ~CHARCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -143,6 +146,7 @@ namespace dnc
          ~STRCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -162,6 +166,7 @@ namespace dnc
          ~NUMCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -182,6 +187,7 @@ namespace dnc
          ~NUMTCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -203,6 +209,7 @@ namespace dnc
          ~INUMTCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -222,6 +229,7 @@ namespace dnc
          ~BLANKCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -236,6 +244,7 @@ namespace dnc
          ~OPTBLANKCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -251,6 +260,7 @@ namespace dnc
          virtual ~REPCommand();
 
          virtual bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -271,6 +281,7 @@ namespace dnc
          ~REPIFCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -290,6 +301,7 @@ namespace dnc
          ~ORCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -309,6 +321,7 @@ namespace dnc
          ~XORCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -328,6 +341,7 @@ namespace dnc
          ~OPTCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -346,6 +360,7 @@ namespace dnc
          ~EXPCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -367,6 +382,7 @@ namespace dnc
          uint32_t getMax() const;
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -385,6 +401,7 @@ namespace dnc
          ~LETTERCommand();
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -427,6 +444,7 @@ namespace dnc
          void addFromString(const std::string& chars);
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
@@ -448,6 +466,7 @@ namespace dnc
          void addCommand(Command* command);
 
          bool check(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+         bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
 
          InitExpressionChar getInitExpressionChar() const override;
 
