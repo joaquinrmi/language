@@ -95,7 +95,7 @@ namespace dnc
       virtual bool check(const std::string& text, uint32_t init_pos, uint32_t last_pos, bool ignore_rest = true) const;
       virtual bool checkAndAdvance(const std::string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const;
 
-      bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const;
+      virtual bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const;
 
       void clear();
 

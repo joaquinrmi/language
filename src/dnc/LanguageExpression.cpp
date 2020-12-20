@@ -600,7 +600,25 @@ namespace dnc
 
    bool LanguageExpression::jumpAndCheck(const string& text, uint32_t& pos, uint32_t last_pos) const
    {
-      return false;
+      if(command_sequence.size() == 0)
+      {
+         return false;
+      }
+
+      if(!command_sequence[0]->jumpAndCheck(text, pos, last_pos))
+      {
+         return false;
+      }
+
+      for(uint32_t i = 1; i < command_sequence.size(); ++i)
+      {
+         if(!command_sequence[i]->check(text, pos, last_pos))
+         {
+            return false;
+         }
+      }
+
+      return true;
    }
 
    void LanguageExpression::clear()

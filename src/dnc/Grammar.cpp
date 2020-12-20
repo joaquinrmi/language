@@ -1,12 +1,15 @@
 #include "Grammar.hpp"
 
+#include <iostream>
+
 #include "UTF8Analyzer.hpp"
 
 using namespace std;
 
 namespace dnc
 {
-   Grammar::Grammar()
+   Grammar::Grammar() :
+      terminal_ref()
    {}
 
    Grammar::Grammar(const vector<LanguageExpression*>& expressions)
@@ -42,7 +45,15 @@ namespace dnc
                uint32_t pos = 0;
                while(UTF8Analyzer::countNextChar(value, char_count, pos))
                {
-                  terminal_ref[value.substr(pos, char_count)].insert(expressions[i]);
+                  string substr = value.substr(pos, char_count);
+                  /*
+                     Lo siguiente es un error que no he podido solucionar.
+                     La ejecución termina con un mensaje "terminate called recursively".
+                     Al ver la pila, parece ser un error de asignación de memoria
+                     dentro del map, además de que el código de error de Windows es
+                     c0000005, el cual refiere un "access violation error".
+                  */
+                  terminal_ref[substr].insert(expressions[i]);
                   pos += char_count;
                }
                break;
@@ -92,7 +103,7 @@ namespace dnc
       for(auto ref : terminal_found->second)
       {
          uint32_t current_pos = pos;
-         if(!ref->check(text, current_pos))
+         if(!ref->checkAndAdvance(text, current_pos, last_pos, true))
          {
             continue;
          }
@@ -133,9 +144,14 @@ namespace dnc
       return false;
    }
 
-   bool Grammar::checkAndAdvance(const std::string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const
+   bool Grammar::checkAndAdvance(const string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const
    {
       return parse(text, init_pos, last_pos);
+   }
+
+   bool Grammar::jumpAndCheck(const string& text, uint32_t& pos, uint32_t last_pos) const
+   {
+      return true;
    }
 
    void Grammar::clear()

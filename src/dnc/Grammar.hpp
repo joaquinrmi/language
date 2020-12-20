@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <map>
+#include <set>
 #include <unordered_set>
 #include <string>
 
@@ -25,10 +26,12 @@ namespace dnc
 
       bool checkAndAdvance(const std::string& text, uint32_t& init_pos, uint32_t last_pos, bool ignore_rest) const override;
 
+      bool jumpAndCheck(const std::string& text, uint32_t& pos, uint32_t last_pos) const override;
+
       void clear();
 
    private:
-      std::map<std::string, std::unordered_set<LanguageExpression*>> terminal_ref;
+      std::map<std::string, std::set<LanguageExpression*>> terminal_ref;
       std::unordered_set<LanguageExpression*> nonterminal_ref;
       std::unordered_set<LanguageExpression*> any_terminal_ref;
    };
