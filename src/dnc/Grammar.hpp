@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <map>
+#include <unordered_map>
 #include <set>
 #include <unordered_set>
 #include <string>
@@ -14,12 +15,12 @@ namespace dnc
    {
    public:
       Grammar();
-      Grammar(const std::vector<LanguageExpression*>& expressions);
+      Grammar(const std::vector<const LanguageExpression*>& expressions);
       ~Grammar();
 
       InitExpressionChar getInitExpressionChar() const override;
 
-      void setExpressions(const std::vector<LanguageExpression*>& expressions);
+      void setExpressions(const std::vector<const LanguageExpression*>& expressions);
 
       bool parse(const std::string& text, uint32_t& pos) const;
       bool parse(const std::string& text, uint32_t& pos, uint32_t last_pos) const;
@@ -31,8 +32,13 @@ namespace dnc
       void clear();
 
    private:
-      std::map<std::string, std::set<LanguageExpression*>> terminal_ref;
-      std::unordered_set<LanguageExpression*> nonterminal_ref;
-      std::unordered_set<LanguageExpression*> any_terminal_ref;
+      /*
+         Este objeto es temporal
+      */
+      LanguageExpression HERO_EXPRESSION;
+
+      std::unordered_map<std::string, std::set<const LanguageExpression*>> terminal_ref;
+      std::unordered_set<const LanguageExpression*> nonterminal_ref;
+      std::unordered_set<const LanguageExpression*> any_terminal_ref;
    };
 }

@@ -9,10 +9,13 @@ using namespace std;
 namespace dnc
 {
    Grammar::Grammar() :
+      HERO_EXPRESSION("NUMT()"),
       terminal_ref()
    {}
 
-   Grammar::Grammar(const vector<LanguageExpression*>& expressions)
+   Grammar::Grammar(const vector<const LanguageExpression*>& expressions) :
+      HERO_EXPRESSION("NUMT()"),
+      terminal_ref()
    {
       setExpressions(expressions);
    }
@@ -27,7 +30,7 @@ namespace dnc
       return { ExpressionChar(this) };
    }
 
-   void Grammar::setExpressions(const vector<LanguageExpression*>& expressions)
+   void Grammar::setExpressions(const vector<const LanguageExpression*>& expressions)
    {
       clear();
 
@@ -46,13 +49,6 @@ namespace dnc
                while(UTF8Analyzer::countNextChar(value, char_count, pos))
                {
                   string substr = value.substr(pos, char_count);
-                  /*
-                     Lo siguiente es un error que no he podido solucionar.
-                     La ejecución termina con un mensaje "terminate called recursively".
-                     Al ver la pila, parece ser un error de asignación de memoria
-                     dentro del map, además de que el código de error de Windows es
-                     c0000005, el cual refiere un "access violation error".
-                  */
                   terminal_ref[substr].insert(expressions[i]);
                   pos += char_count;
                }
@@ -110,12 +106,15 @@ namespace dnc
 
          if(current_pos >= last_pos)
          {
+            pos = current_pos;
             return true;
          }
 
          bool repeat = false;
          while(true)
          {
+            repeat = false;
+
             for(auto sec_ref : nonterminal_ref)
             {
                uint32_t sec_current_pos = current_pos;
@@ -130,6 +129,7 @@ namespace dnc
                }
                else
                {
+                  current_pos = sec_current_pos;
                   repeat = true;
                   break;
                }
