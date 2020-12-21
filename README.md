@@ -409,20 +409,20 @@ Además, como vemos en `2 * 3 + 5`, una expresión puede ser también una operac
 
 Ahora estamos en condiciones de definir correctamente todas las operaciones y los paréntesis y los corchetes:
 ```cpp
-auto* sum_exp = new LanguageExpression("EXP(0)-UCHAR(\"+\")-EXP(0)", 0, { math_exp });
-auto* rest_exp = new LanguageExpression("EXP(0)-UCHAR(\"-\")-EXP(0)", 0, { math_exp });
-auto* mult_exp = new LanguageExpression("EXP(0)-UCHAR(\"*\")-EXP(0)", 0, { math_exp });
-auto* div_exp = new LanguageExpression("EXP(0)-UCHAR(\"/\")-EXP(0)", 0, { math_exp });
-auto* bracket_exp = new LanguageExpression("UCHAR(\"(\")-EXP(0)-UCHAR(\")\")", 0, { math_exp });
-auto* sq_bracket_exp = new LanguageExpression("UCHAR(\"[\")-EXP(0)-UCHAR(\"]\")", 0, { math_exp });
+auto sum_exp = new LanguageExpression("EXP(0)-UCHAR(\"+\")-EXP(0)", 0, { calculator });
+auto rest_exp = new LanguageExpression("EXP(0)-UCHAR(\"-\")-EXP(0)", 0, { calculator });
+auto mult_exp = new LanguageExpression("EXP(0)-UCHAR(\"*\")-EXP(0)", 0, { calculator });
+auto div_exp = new LanguageExpression("EXP(0)-UCHAR(\"/\")-EXP(0)", 0, { calculator });
+auto bracket_exp = new LanguageExpression("UCHAR(\"(\")-EXP(0)-UCHAR(\")\")", 0, { calculator });
+auto sq_bracket_exp = new LanguageExpression("UCHAR(\"[\")-EXP(0)-UCHAR(\"]\")", 0, { calculator });
 ```
-Aquí estamos definiendo todas las expresiones en términos de todas las expresiones, las cuales se referencian con la expresión `math_exp`. Como `math_exp` puede ser un número, una operación o una expresión encerrada entre paréntesis o corchetes, podemos definirla con el comando `SWITCH()`:
+Aquí estamos definiendo todas las expresiones en términos de todas las expresiones, las cuales se referencian con la expresión `calculator`. En este caso, `calculator` es un conjunto de expresiones relacionadas entre sí, por lo que se utiliza el tipo especial `Grammar` para declararla. `Grammar` representa una gramática y recibe como parámetro en su constructor un `std::vector<const LanguageExpression*>`.
 ```cpp
-LanguageExpression math_exp(
-   "SWITCH(EXP(0),EXP(1),EXP(2),EXP(3),EXP(4),EXP(5),EXP(6))", 0,
-   { num_exp, bracket_exp, sq_bracker_exp,
-      sum_exp, rest_exp, mult_exp, div_exp }
-);
+auto calculator = new Grammar({
+   num_exp,
+   sum_exp, rest_exp, mult_exp, div_exp,
+   bracket_exp, sq_bracket_exp
+});
 ```
 
 ## Características técnicas
